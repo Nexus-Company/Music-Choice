@@ -12,4 +12,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Music.Choice.Domain\Nexus.Music.Choice.Domain.csproj" />
+    <ProjectReference Include="..\Nexus.Music.Choice.Spotify\Nexus.Music.Choice.Spotify.csproj" />
+  </ItemGroup>
 </Project>

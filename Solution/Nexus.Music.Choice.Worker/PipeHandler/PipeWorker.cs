@@ -1,15 +1,14 @@
-using Nexus.Music.Choice.Worker.Workers.Handlers;
 using System.IO.Pipes;
 
-namespace Nexus.Music.Choice.Worker.Workers.MusicPipe;
+namespace Nexus.Music.Choice.Worker.PipeHandler;
 
-public class MusicPipeWorker : BackgroundService
+public class PipeWorker : BackgroundService
 {
     private const string PipeName = "MusicChoicePipe";
-    private readonly ILogger<MusicPipeWorker> _logger;
-    private readonly IMusicPipeConnectionHandler _connectionHandler;
+    private readonly ILogger<PipeWorker> _logger;
+    private readonly IPipeConnectionHandler _connectionHandler;
 
-    public MusicPipeWorker(ILogger<MusicPipeWorker> logger, IMusicPipeConnectionHandler connectionHandler)
+    public PipeWorker(ILogger<PipeWorker> logger, IPipeConnectionHandler connectionHandler)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionHandler = connectionHandler ?? throw new ArgumentNullException(nameof(connectionHandler));

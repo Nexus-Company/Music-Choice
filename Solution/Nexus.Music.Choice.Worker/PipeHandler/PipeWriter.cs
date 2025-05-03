@@ -1,23 +1,20 @@
-﻿using Nexus.Music.Choice.Worker.Services;
-using Nexus.Music.Choice.Worker.Workers.Handlers;
+﻿using Nexus.Music.Choice.Worker.Interfaces;
 using System.Collections.Concurrent;
 using System.Text.Json;
 
-namespace Nexus.Music.Choice.Worker.Workers.MusicPipe;
+namespace Nexus.Music.Choice.Worker.PipeHandler;
 
-internal class MusicPipeWriter : IPipeStream
+internal class PipeWriter : IStream, IStreamWriter, IDisposable
 {
     private readonly StreamWriter _writer;
-    private readonly IInteractionService _interactionService;
-    private readonly ILogger<MusicPipeConnectionHandler> _logger;
+    private readonly ILogger<PipeConnectionHandler> _logger;
     private readonly Thread _task;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly ConcurrentQueue<object> _eventQueue;
 
-    public MusicPipeWriter(StreamWriter writer, IInteractionService interactionService, ILogger<MusicPipeConnectionHandler> logger)
+    public PipeWriter(StreamWriter writer, ILogger<PipeConnectionHandler> logger)
     {
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-        _interactionService = interactionService ?? throw new ArgumentNullException(nameof(interactionService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cancellationTokenSource = new CancellationTokenSource();
         _eventQueue = new ConcurrentQueue<object>();
@@ -33,7 +30,7 @@ internal class MusicPipeWriter : IPipeStream
     public void Stop()
     {
         _cancellationTokenSource.Cancel();
-        _logger.LogInformation("Music Pipe Writer stopped successfully!");
+        _logger.LogDebug("Music Pipe Writer stopped successfully!");
     }
 
     private async void WriteToPipe()
@@ -45,7 +42,7 @@ internal class MusicPipeWriter : IPipeStream
                 if (_eventQueue.TryDequeue(out var evt))
                 {
                     var json = JsonSerializer.Serialize(evt);
-                    await _writer.WriteLineAsync(json);
+                    await _writer.WriteAsync(json);
                     await _writer.FlushAsync();
                     _logger.LogInformation("Interaction Event written to pipe: {interaction}", evt);
                 }
@@ -74,5 +71,10 @@ internal class MusicPipeWriter : IPipeStream
         _cancellationTokenSource.Dispose();
 
         GC.SuppressFinalize(this);
+    }
+
+    public void AddToSendQueue(object obj)
+    {
+        _eventQueue.Enqueue(obj);
     }
 }
