@@ -2,7 +2,9 @@
 
 **Nexus Music Choice Worker** é o núcleo do sistema **Music Choice**, um microserviço desenvolvido para gerenciar experiências musicais colaborativas em tempo real. Ele permite que múltiplos usuários interajam com uma fila musical compartilhada — adicionando, removendo e votando em músicas — enquanto mantém integração contínua com serviços externos como Spotify (atualmente integrado) e outras plataformas de streaming no futuro.
 
-Atualmente o sistema está em fase de desenvolvimento e testes, com integração ativa apenas ao Spotify, mas foi projetado desde o início para suportar múltiplas plataformas (Apple Music, Deezer, Tidal, entre outras). Além disso, no futuro, o sistema permitirá que a música seja tocada em várias caixas de som, com a reprodução local no dispositivo em vez de depender diretamente da plataforma de streaming.
+Atualmente, o sistema está em fase de desenvolvimento e testes, com integração ativa apenas ao Spotify, mas foi projetado desde o início para suportar múltiplas plataformas (Apple Music, Deezer, Tidal, entre outras). Além disso, no futuro, o sistema permitirá que a música seja tocada em várias caixas de som, com a reprodução local no dispositivo em vez de depender diretamente da plataforma de streaming.
+
+**Nota:** O **Nexus Music Choice Worker** segue uma arquitetura modular, permitindo a fácil expansão para novas plataformas de streaming e integrações com APIs externas.
 
 ---
 
@@ -16,7 +18,7 @@ O Nexus Music Choice Worker transforma qualquer dispositivo em um “centro musi
 
 - **.NET 9** — plataforma robusta e moderna para desenvolvimento backend.
 - **Spotify Web API** — integração principal atual.
-- **Arquitetura Modular** — preparada para expansão e inclusão de novos serviços.
+- **Arquitetura Modular** — preparada para expansão e inclusão de novos serviços, incluindo a integração com múltiplas APIs de música.
 - **Named Pipes (IPC)** — comunicação rápida e eficiente entre processos no sistema.
 - **JSON Protocol** — padrão de troca de mensagens leve e extensível.
 - **BackgroundService** — execução contínua e resiliente no backend.
@@ -44,7 +46,7 @@ O Nexus Music Choice Worker transforma qualquer dispositivo em um “centro musi
 
 ## 🏗️ Arquitetura do Sistema
 
-A aplicação foi projetada com foco em modularidade e separação de responsabilidades, o que facilita a manutenção e a inclusão de novos recursos.
+A aplicação foi projetada com foco em modularidade e separação de responsabilidades, o que facilita a manutenção e a inclusão de novos recursos, incluindo a integração com múltiplas APIs.
 
 | Componente                 | Responsabilidade Principal                                                                          |
 |----------------------------|-----------------------------------------------------------------------------------------------------|
@@ -92,13 +94,12 @@ O sistema gera logs estruturados para:
 
 ## 🔗 Integração com APIs de Música
 
-Atualmente, o projeto utiliza a **Spotify Web API** para:
+### **Integração com Múltiplas APIs**
 
-- Buscar e gerenciar músicas.
-- Controlar playlists e fila de reprodução.
-- Consultar informações de faixas.
+O **Nexus Music Choice Worker** foi projetado para permitir a integração com múltiplas APIs de música simultaneamente. Atualmente, a integração é feita com o **Spotify Web API**, mas o sistema foi desenvolvido de forma modular, permitindo a adição de novas APIs com facilidade. No futuro, o sistema permitirá integração com serviços como Apple Music, Deezer, Tidal, entre outros.
 
-✅ **Planejamento futuro**: Apple Music, Deezer, Tidal, YouTube Music e outros, com módulos plugáveis seguindo contratos já definidos no sistema.
+📎 **Veja mais detalhes sobre a integração de novas APIs aqui:**  
+[📄 Documentação: Integração com Novas APIs](./Documentation/NEW_API_INTEGRATION.MD)
 
 ---
 

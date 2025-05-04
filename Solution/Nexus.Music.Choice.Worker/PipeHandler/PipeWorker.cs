@@ -21,7 +21,15 @@ public class PipeWorker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             var server = CreatePipeServer();
-            await server.WaitForConnectionAsync(stoppingToken);
+
+            try
+            {
+                await server.WaitForConnectionAsync(stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
 
             _connectionHandler.HandleConnection(server, stoppingToken);
         }

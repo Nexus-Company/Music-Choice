@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Domain;
+﻿using Nexus.Music.Choice.Domain.Services;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
 using Nexus.Music.Choice.Worker.Base.Models.Enums;
@@ -41,6 +41,7 @@ internal class InteractionService : IInteractionService
 
         _eventDispatcher.DispatchEvent(new Event
         {
+            MessageType = MessageType.Event,
             EventType = EventType.TrackQueueAdd,
             Data = trackId
         });
@@ -75,6 +76,7 @@ internal class InteractionService : IInteractionService
 
             _eventDispatcher.DispatchEvent(new Event
             {
+                MessageType = MessageType.Event,
                 EventType = EventType.TrackQueueRemove,
                 Data = trackId
             });
@@ -102,6 +104,7 @@ internal class InteractionService : IInteractionService
 
             _eventDispatcher.DispatchEvent(new Event
             {
+                MessageType = MessageType.Event,
                 EventType = EventType.SkipTrack
             });
             _logger.LogInformation("Skip track {trackId} action performed.", trackId);

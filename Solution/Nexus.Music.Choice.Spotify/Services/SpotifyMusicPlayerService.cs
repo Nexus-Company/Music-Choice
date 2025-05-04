@@ -1,14 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using Nexus.Music.Choice.Domain;
 using Nexus.Music.Choice.Domain.Models;
+using Nexus.Music.Choice.Domain.Services;
 
-namespace Nexus.Music.Choice.Spotify;
+namespace Nexus.Music.Choice.Spotify.Services;
 
 public class SpotifyMusicPlayerService : IMusicPlayerService
 {
     private readonly ILogger<SpotifyMusicPlayerService> _logger;
     public event EventHandler<PlayerStateChangedEventArgs> PlayerStateChanged;
 
+    public SpotifyMusicPlayerService() { }
     public SpotifyMusicPlayerService(ILogger<SpotifyMusicPlayerService> logger)
     {
         _logger = logger;
@@ -21,12 +22,18 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
 
     public Task<PlayerState> GetPlayerStateAsync(CancellationToken? cancellationToken = null)
     {
-        throw new NotImplementedException();
+        PlayerState playerState = new DefaultPlayerState
+        {
+        };
+
+        return Task.FromResult(playerState);
     }
 
     public Task<IEnumerable<Track>> GetQueueAsync(CancellationToken? cancellationToken = null)
     {
-        throw new NotImplementedException();
+        IEnumerable<Track> queue = [];
+
+        return Task.FromResult(queue);
     }
 
     public Task<bool> RemoveTrackAsync(string songId, string? deviceId, CancellationToken? cancellationToken = default)
@@ -38,4 +45,11 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     {
         throw new NotImplementedException();
     }
+}
+
+
+public class DefaultPlayerState : PlayerState
+{
+
+
 }

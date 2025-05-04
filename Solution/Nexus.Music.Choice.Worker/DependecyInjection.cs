@@ -1,7 +1,9 @@
-﻿using Nexus.Music.Choice.Worker.Base.Dispatcher;
+﻿using Nexus.Music.Choice.Domain.Services;
+using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Interfaces;
 using Nexus.Music.Choice.Worker.PipeHandler;
 using Nexus.Music.Choice.Worker.Services;
+using Nexus.Music.Choice.Worker.Services.Integrations;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
 
 namespace Nexus.Music.Choice.Worker;
@@ -26,5 +28,13 @@ public static class DependecyInjection
             .AddSingleton<IFeedbackService, FeedBackService>()
             .AddSingleton<IInteractionService, InteractionService>()
             .AddSingleton<IVoteService, VoteService>();
+    }
+
+    public static IServiceCollection AddIntegrationsBase(this IServiceCollection services)
+    {
+        return services
+            .AddSingleton<ITokenStoreService, TokenStoreService>()
+            .AddScoped<IHttpProvisioningService, HttpProvisioningService>()
+            .AddHostedService<AuthenticationMonitorWorker>();
     }
 }

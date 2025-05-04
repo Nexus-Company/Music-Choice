@@ -8,6 +8,7 @@ builder.Services
     .AddSingleton<IClock, SystemClock>()
     .AddInteractionServices()
     .AddIPCWorker()
+    .AddIntegrationsBase()
     .AddSpotifyPlayer();
 
 var host = builder.Build();

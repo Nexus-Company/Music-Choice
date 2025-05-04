@@ -2,8 +2,8 @@
 
 public abstract class PlayerState
 {
-    public bool IsPlaying { get; set; }
-    public long TimeStamp { get; set; }
-    public int ProgressMilisseconds { get; set; }
-    public Track Item { get; set; }
+    public virtual bool IsPlaying { get;  }
+    public virtual long TimeStamp { get; }
+    public virtual int ProgressMilisseconds { get; }
+    public virtual Track? Item { get;  }
 }

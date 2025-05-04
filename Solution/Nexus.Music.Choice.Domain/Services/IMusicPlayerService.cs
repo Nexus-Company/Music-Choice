@@ -1,6 +1,6 @@
 ﻿using Nexus.Music.Choice.Domain.Models;
 
-namespace Nexus.Music.Choice.Domain;
+namespace Nexus.Music.Choice.Domain.Services;
 
 public interface IMusicPlayerService
 {

@@ -1,4 +1,6 @@
-﻿using Nexus.Music.Choice.Worker.Base.Dispatcher;
+﻿using Nexus.Music.Choice.Domain.Services;
+using Nexus.Music.Choice.Worker.Base.Dispatcher;
+using Nexus.Music.Choice.Worker.Base.Models;
 using System.IO.Pipes;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
@@ -13,6 +15,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
     private readonly ILogger<PipeConnectionHandler> _logger;
     private readonly ICommandDispatcher<PipeReader> _commandDispatcher;
     private readonly IEventDispatcher<PipeWriter> _eventDispatcher;
+    private readonly IMusicPlayerService _musicPlayerService;
     private int _connectionCounter = 0;
 
     private readonly List<Task> _tasks = [];
@@ -21,14 +24,16 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
     public PipeConnectionHandler(
         ILogger<PipeConnectionHandler> logger,
         ICommandDispatcher<PipeReader> commandDispatcher,
+        IMusicPlayerService musicPlayerService,
         IEventDispatcher<PipeWriter> eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _commandDispatcher = commandDispatcher ?? throw new ArgumentNullException(nameof(commandDispatcher));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
+        _musicPlayerService = musicPlayerService?? throw new ArgumentNullException(nameof(musicPlayerService));
     }
 
-    public void HandleConnection(NamedPipeServerStream server, CancellationToken stoppingToken)
+    public async void HandleConnection(NamedPipeServerStream server, CancellationToken stoppingToken)
     {
         int connectionId = _connectionCounter;
         _connectionCounter++;
@@ -41,14 +46,29 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
 
         _logger.LogInformation("Client with connection id #{id} connected.", connectionId);
 
-        _tasks.Add(MonitorConnection(server, connectionId, reader, writer, stoppingToken));
+        await SendServerState(writer);
+
+        _tasks.Add(MonitorConnection(server, connectionId, stoppingToken));
+    }
+
+    private async Task SendServerState(PipeWriter streamWriter)
+    {
+        streamWriter.AddToSendQueue(new Event()
+        {
+            MessageType = MessageType.PlayerState,
+            Data = await _musicPlayerService.GetPlayerStateAsync()
+        });
+
+        streamWriter.AddToSendQueue(new Event()
+        {
+            MessageType = MessageType.TrackQueue,
+            Data = await _musicPlayerService.GetQueueAsync()
+        });
     }
 
     private async Task MonitorConnection(
         NamedPipeServerStream server,
         int connectionId,
-        PipeReader pipeReader,
-        PipeWriter pipeWriter,
         CancellationToken stoppingToken)
     {
 
@@ -93,7 +113,3 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         }
     }
 }
-
-
-
-
