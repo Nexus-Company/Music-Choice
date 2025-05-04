@@ -1,21 +1,21 @@
-﻿using Nexus.Music.Choice.Domain.Services;
-using System.Collections.Concurrent;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-internal class TokenStoreService : ITokenStoreService
+namespace Nexus.Music.Choice.Domain.Services;
+
+public abstract class BaseTokenStoreService 
 {
     private readonly string _storageDirectory;
     private readonly byte[] _encryptionKey;
     private readonly string _tokenFilePath;
-    private readonly ConcurrentDictionary<string, string> _accessTokenCache = new();
 
-    public TokenStoreService()
+    public BaseTokenStoreService()
     {
         _storageDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "MusicChoiceTokens"
+            "Music-Choice"
         );
 
         if (!Directory.Exists(_storageDirectory))
@@ -24,11 +24,9 @@ internal class TokenStoreService : ITokenStoreService
         }
 
 #warning Deve sempre definir TOKEN_STORE_SECRET como variável de ambiente.
-        var secret = Environment.GetEnvironmentVariable("TOKEN_STORE_SECRET")
+        var secret = Environment.GetEnvironmentVariable("MC_TOKEN_STORE_SECRET")
                      ?? throw new InvalidOperationException("Environment variable 'TOKEN_STORE_SECRET' not set.");
-
-        using var sha = SHA256.Create();
-        _encryptionKey = sha.ComputeHash(Encoding.UTF8.GetBytes(secret));
+        _encryptionKey = SHA256.HashData(Encoding.UTF8.GetBytes(secret));
 
         // Armazena todos os tokens em um único arquivo
         _tokenFilePath = Path.Combine(_storageDirectory, "all_tokens.token");
@@ -66,9 +64,6 @@ internal class TokenStoreService : ITokenStoreService
         byte[] allTokensBytes = Encoding.UTF8.GetBytes(allTokensJson);
 
         await File.WriteAllBytesAsync(_tokenFilePath, allTokensBytes);
-
-        // Armazena o AccessToken apenas em memória
-        _accessTokenCache[serviceName] = token.AccessToken;
     }
 
     public async Task<TokenData?> GetTokenAsync(string serviceName)
@@ -84,12 +79,6 @@ internal class TokenStoreService : ITokenStoreService
 
             if (token != null)
             {
-                // Tenta pegar o AccessToken da memória
-                if (_accessTokenCache.TryGetValue(serviceName, out var accessToken))
-                {
-                    token.AccessToken = accessToken;
-                }
-
                 return token;
             }
         }
@@ -108,8 +97,6 @@ internal class TokenStoreService : ITokenStoreService
 
             File.WriteAllBytes(_tokenFilePath, allTokensBytes);
         }
-
-        _accessTokenCache.TryRemove(serviceName, out _);
 
         return Task.CompletedTask;
     }

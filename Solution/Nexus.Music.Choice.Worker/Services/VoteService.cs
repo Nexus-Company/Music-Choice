@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Domain.Services;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
 
 namespace Nexus.Music.Choice.Worker.Services;

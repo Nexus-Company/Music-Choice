@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Domain.Services;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 
 public class AuthenticationMonitorWorker : BackgroundService
 {
@@ -14,10 +14,10 @@ public class AuthenticationMonitorWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        
+        var integrationServices = scope.ServiceProvider.GetServices<IApiAuthenticationService>();
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            var integrationServices = scope.ServiceProvider.GetServices<IApiAuthenticationService>();
             foreach (var service in integrationServices)
             {
                 try

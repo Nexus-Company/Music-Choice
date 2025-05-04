@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Domain.Services;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
 using System.IO.Pipes;

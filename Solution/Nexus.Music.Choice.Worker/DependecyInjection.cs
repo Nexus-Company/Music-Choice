@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Domain.Services;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Interfaces;
 using Nexus.Music.Choice.Worker.PipeHandler;
@@ -33,8 +33,8 @@ public static class DependecyInjection
     public static IServiceCollection AddIntegrationsBase(this IServiceCollection services)
     {
         return services
-            .AddSingleton<ITokenStoreService, TokenStoreService>()
             .AddScoped<IHttpProvisioningService, HttpProvisioningService>()
+            .AddSingleton<IHttpProvisioningServiceFactory, HttpProvisioningServiceFactory>()
             .AddHostedService<AuthenticationMonitorWorker>();
     }
 }

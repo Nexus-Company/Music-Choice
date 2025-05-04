@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nexus.Music.Choice.Domain.Models;
-using Nexus.Music.Choice.Domain.Services;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
+using Nexus.Music.Choice.Spotify.Services.Interfaces;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
@@ -9,8 +10,9 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     private readonly ILogger<SpotifyMusicPlayerService> _logger;
     public event EventHandler<PlayerStateChangedEventArgs> PlayerStateChanged;
 
-    public SpotifyMusicPlayerService() { }
-    public SpotifyMusicPlayerService(ILogger<SpotifyMusicPlayerService> logger)
+    public SpotifyMusicPlayerService(
+        ISpotifyApiService apiService,
+        ILogger<SpotifyMusicPlayerService> logger)
     {
         _logger = logger;
     }

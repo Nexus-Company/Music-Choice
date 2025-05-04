@@ -1,9 +1,8 @@
-﻿namespace Nexus.Music.Choice.Domain.Services;
+﻿namespace Nexus.Music.Choice.Domain.Services.Interfaces;
 
 public interface IApiAuthenticationService
 {
     public string Name { get; }
-    string? GetAcessToken();
     Task<bool> CheckAuthenticationAsync();
     Task StartAuthenticationAsync();
 }

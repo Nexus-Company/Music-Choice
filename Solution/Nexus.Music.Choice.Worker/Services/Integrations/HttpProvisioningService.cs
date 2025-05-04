@@ -1,5 +1,5 @@
 ﻿using Nexus.Music.Choice.Domain;
-using Nexus.Music.Choice.Domain.Services;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
 using System.Net;
 
 namespace Nexus.Music.Choice.Worker.Services.Integrations;
@@ -13,7 +13,6 @@ internal class HttpProvisioningService : IHttpProvisioningService
     public event HttpMessageReceivedDelegate HttpMessageReceived;
     public bool IsRunning => _httpListener.IsListening;
 
-    Task runBackground;
     public HttpProvisioningService(IClock clock, ILogger<HttpProvisioningService> logger)
     {
         _clock = clock;
@@ -21,7 +20,7 @@ internal class HttpProvisioningService : IHttpProvisioningService
         _httpListener = new HttpListener();
     }
 
-    public async Task StartAsync(string url)
+    public async Task StartAsync(string url, CancellationToken cancellationToken = default)
     {
         var baseUrl = new Uri(url).GetLeftPart(UriPartial.Authority) + '/';
         _httpListener.Prefixes.Add(baseUrl);
@@ -29,20 +28,18 @@ internal class HttpProvisioningService : IHttpProvisioningService
 
         _logger.LogInformation("HTTP listener started at {url}", baseUrl);
 
-        runBackground = new Task(async () =>
+        while (_httpListener.IsListening)
         {
-            while (_httpListener.IsListening)
-            {
-                var context = await _httpListener.GetContextAsync();
-                await ProcessRequestAsync(context);
-            }
-        });
+            var context = await _httpListener.GetContextAsync();
 
-        if (runBackground.Status == TaskStatus.Created)
-            runBackground.Start();
+            if (await ProcessRequestAsync(context))
+                break;
+        }
+
+        await Task.CompletedTask;
     }
 
-    private async Task ProcessRequestAsync(HttpListenerContext context)
+    private async Task<bool> ProcessRequestAsync(HttpListenerContext context)
     {
         _logger.LogDebug($"Received request: {context.Request.HttpMethod} {context.Request.Url}");
 
@@ -52,6 +49,8 @@ internal class HttpProvisioningService : IHttpProvisioningService
         });
 
         // Send a response back to the client
+
+        return success;
     }
 
     public async Task StopAsync()

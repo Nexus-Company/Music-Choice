@@ -3,11 +3,13 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Nexus.Music.Choice.Domain;
 using Nexus.Music.Choice.Domain.Models;
-using Nexus.Music.Choice.Domain.Services;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
+using Nexus.Music.Choice.Spotify.Services.Interfaces;
+using System.Web;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
-public class SpotifyAuthenticationService : IApiAuthenticationService
+public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposable
 {
     public string Name => "Spotify";
 
@@ -17,19 +19,20 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
     private readonly HttpClient _httpClient;
     private readonly ILogger<SpotifyAuthenticationService> _logger;
     private readonly IClock _clock;
+    private readonly string codeVerifier = PkceUtil.GenerateCodeVerifier();
 
-    private string? accessToken = string.Empty;
+    public event EventHandler<string> UpdateAccessToken;
 
     public SpotifyAuthenticationService(
-        IHttpProvisioningService httpProvisioningService,
-        ITokenStoreService tokenStoreService,
+        IHttpProvisioningServiceFactory httpProvisioningService,
+        ISpotifyTokenStoreService tokenStoreService,
         HttpClient httpClient,
         IConfiguration configuration,
         IClock clock,
         ILogger<SpotifyAuthenticationService> logger)
     {
         _tokenStoreService = tokenStoreService;
-        _httpProvisioningService = httpProvisioningService;
+        _httpProvisioningService = httpProvisioningService.GetOrCreate<SpotifyAuthenticationService>();
         _httpClient = httpClient;
         _logger = logger;
         _clock = clock;
@@ -38,15 +41,13 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
 
     public async Task<bool> CheckAuthenticationAsync()
     {
-        var tokenData = await _tokenStoreService.GetTokenAsync(Name);
+        var tokenData = await _tokenStoreService.GetTokenAsync();
 
-        if (tokenData == null || tokenData.ExpiresIn < _clock.Now || tokenData.AccessToken == null)
+        if (tokenData == null || tokenData.ExpiresIn <= _clock.Now || string.IsNullOrWhiteSpace(tokenData.AccessToken))
         {
             _logger.LogInformation("Token is either missing or expired, attempting to refresh...");
             return await TryRefreshAsync(tokenData?.RefreshToken);
         }
-
-        accessToken = tokenData?.AccessToken;
 
         return true;
     }
@@ -54,6 +55,19 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
     public async Task StartAuthenticationAsync()
     {
         _httpProvisioningService.HttpMessageReceived += TryAuthorizationAsync;
+
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        query["client_id"] = _configuration.ClientId;
+        query["response_type"] = "code";
+        query["redirect_uri"] = _configuration.RedirectUri;
+        query["code_challenge_method"] = "S256";
+        query["code_challenge"] = PkceUtil.GenerateCodeChallenge(codeVerifier);
+        query["scope"] = string.Join(" ", _configuration.Scopes);
+
+        string authorizeUrl = $"https://accounts.spotify.com/authorize?{query}";
+
+        Environment.SetEnvironmentVariable("MC_SPOTIFY_LOGIN_URL", authorizeUrl, EnvironmentVariableTarget.User);
+
         await _httpProvisioningService.StartAsync(_configuration.RedirectUri);
     }
 
@@ -106,7 +120,8 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
         return await GetTokenFromApi("authorization_code", new Dictionary<string, string>
         {
             { "code", code },
-            { "redirect_uri", redirectUri }
+            { "redirect_uri", redirectUri },
+            { "code_verifier", codeVerifier }
         });
     }
 
@@ -123,11 +138,11 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
         var requestContent = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             { "grant_type", grantType },
-            { "client_id", _configuration.ClientId },
-            { "client_secret", _configuration.ClientSecret }
+            { "client_id", _configuration.ClientId }
         }.Concat(additionalParams));
 
         var response = await _httpClient.PostAsync(_configuration.TokenEndpoint, requestContent);
+        var content = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
@@ -135,25 +150,32 @@ public class SpotifyAuthenticationService : IApiAuthenticationService
             return null;
         }
 
-        var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<SpotifyTokenResponse>(content);
     }
 
     private async Task SaveTokenAsync(SpotifyTokenResponse token)
     {
-        accessToken = token.Token;
-
         var tokenData = new TokenData
         {
+            AccessToken = token.Token,
             RefreshToken = token.Refresh,
             ExpiresIn = DateTime.UtcNow.AddSeconds(token.ExpiresIn)
         };
 
-        await _tokenStoreService.SaveTokenAsync(Name, tokenData);
+        UpdateAccessToken?.Invoke(this, token.Token);
+        await _tokenStoreService.SaveTokenAsync(tokenData);
     }
 
-    public string? GetAcessToken()
-        => accessToken;
+    public void Dispose()
+    {
+        if (_httpProvisioningService.IsRunning)
+        {
+            _httpProvisioningService.HttpMessageReceived -= TryAuthorizationAsync;
+            _httpProvisioningService.StopAsync().Wait();
+        }
+
+        GC.SuppressFinalize(this);
+    }
 }
 
 public class SpotifyApiConfiguration : ApiConfiguration
