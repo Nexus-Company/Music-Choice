@@ -1,7 +1,6 @@
 ﻿using Nexus.Music.Choice.Worker.Base.Models;
 using Nexus.Music.Choice.Worker.Interfaces;
 using System.Text.Json;
-using System.Threading;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
 

@@ -4,6 +4,6 @@ public enum EventType
 {
     TrackQueueAdd,
     TrackQueueRemove,
-    TrackPlay,
-    SkipMusic
+    StartTrack,
+    SkipTrack
 }

@@ -19,7 +19,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
     private bool _disposed = false;
 
     public PipeConnectionHandler(
-        ILogger<PipeConnectionHandler> logger, 
+        ILogger<PipeConnectionHandler> logger,
         ICommandDispatcher<PipeReader> commandDispatcher,
         IEventDispatcher<PipeWriter> eventDispatcher)
     {
@@ -51,7 +51,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         PipeWriter pipeWriter,
         CancellationToken stoppingToken)
     {
-   
+
         while (!stoppingToken.IsCancellationRequested && server.IsConnected)
         {
             await Task.Delay(100, stoppingToken);

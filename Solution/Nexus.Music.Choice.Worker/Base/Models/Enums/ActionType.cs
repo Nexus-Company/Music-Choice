@@ -2,9 +2,7 @@
 
 public enum ActionType
 {
-    TrackAdd,
-    TrackRemove,
-    TrackLike,
-    TrackDislike,
-    VoteSkip
+    Feedback,
+    Vote,
+    QueueChange
 }
