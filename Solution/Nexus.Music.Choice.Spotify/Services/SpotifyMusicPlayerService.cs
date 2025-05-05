@@ -14,7 +14,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     private readonly ISpotifyApiService _spotifyApiService;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public event EventHandler<PlayerStateChangedEventArgs>? PlayerStateChanged;
-    private PlayerState? _lastPlayerState;
+    private SpotifyPlayerState? _lastPlayerState;
     private readonly Timer _timer;
     public SpotifyMusicPlayerService(
         ISpotifyApiService apiService,
@@ -26,7 +26,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
         _timer = new Timer(async _ => await CheckPlayerStateAsync(), null, 0, 500);
     }
 
-    public Task<bool> AddTrackAsync(string songId, string? deviceId, CancellationToken cancellationToken = default)
+    public Task<bool> AddTrackAsync(string songId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -51,14 +51,38 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
         return Task.FromResult(queue);
     }
 
-    public Task<bool> RemoveTrackAsync(string songId, string? deviceId, CancellationToken cancellationToken = default)
+    public Task<bool> RemoveTrackAsync(string songId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> SkipTrackAsync(string? deviceId, CancellationToken cancellationToken = default)
+    public async Task<bool> SkipTrackAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (_lastPlayerState == null)
+        {
+            while (_lastPlayerState == null)
+            {
+                await Task.Delay(100, cancellationToken);
+            }
+        }
+
+        if (_lastPlayerState?.IsPlaying == true)
+        {
+            var result = await _spotifyApiService.SkipTrackAsync(_lastPlayerState.Device?.Id, cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("Track skipped successfully.");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to skip track.");
+            }
+
+            return result;
+        }
+
+        return false;
     }
 
     private async Task CheckPlayerStateAsync()

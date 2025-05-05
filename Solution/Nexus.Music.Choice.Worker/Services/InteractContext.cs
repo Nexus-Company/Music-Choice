@@ -26,4 +26,11 @@ public class InteractContext : DbContext
 
         base.OnConfiguring(optionsBuilder);
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(InteractContext).Assembly);
+
+        base.OnModelCreating(modelBuilder);
+    }
 }

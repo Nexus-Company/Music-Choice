@@ -8,7 +8,10 @@ internal class PipeCommandDispatcher : BaseCommandDispatcher<PipeReader>, IComma
 {
     public event EventHandler<Command> CommandReceived;
 
-    public PipeCommandDispatcher(ILogger<PipeCommandDispatcher> logger, IFeedbackService feedBackService, IInteractionService interactionService)
+    public PipeCommandDispatcher(
+        ILogger<PipeCommandDispatcher> logger, 
+        IFeedbackService feedBackService, 
+        IInteractionService interactionService)
         : base(logger, feedBackService, interactionService)
     {
     }

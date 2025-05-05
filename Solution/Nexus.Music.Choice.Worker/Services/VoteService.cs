@@ -128,11 +128,9 @@ public struct KeyVotingType
         if (obj is not KeyVotingType other)
             return false;
 
-        // Compara Type diretamente
         if (Type != other.Type)
             return false;
 
-        // Trata Data nulo
         if (Data == null && other.Data == null)
             return true;
 
@@ -144,9 +142,10 @@ public struct KeyVotingType
 
     public override readonly int GetHashCode()
     {
-        return Data == null
+        int hashCode = Data == null
             ? Type.GetHashCode()
             : HashCode.Combine(Type, Data.GetHashCode());
+        return hashCode;
     }
 
     public static bool operator ==(KeyVotingType left, KeyVotingType right)

@@ -53,18 +53,19 @@ class Program
 
     private static async Task ReadMessages(NamedPipeClientStream pipeClient)
     {
+        Console.Clear();
         byte[] buffer = new byte[1024];
 
         while (true)
         {
             try
             {
-                int bytesRead = await pipeClient.ReadAsync(buffer, 0, buffer.Length);
+                int bytesRead = await pipeClient.ReadAsync(buffer);
                 if (bytesRead == 0) break;
 
                 string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-                Console.ForegroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
                 Console.Write("[RECEBIDO] ");
                 Console.ResetColor();
                 Console.WriteLine(receivedMessage);

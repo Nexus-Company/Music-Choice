@@ -46,7 +46,7 @@ public class InteractionLogService : IInteractionLogService
         _context.VoteInteractions.Add(voteLog);
         await _context.SaveChangesAsync(cancellationToken ?? CancellationToken.None);
 
-        _logger.LogInformation("Vote for '{VotingType}' logged for track {Data} by user {UserId}.", votingType, data, userId);
+        _logger.LogInformation("Vote for '{VotingType}' logged for track '{Data}' by user '{UserId}'.", votingType, data, userId);
     }
 
     public async Task LogActionExecutedAsync(ActionExecutedType actionExecutedType, object? data, Guid? userId = null, CancellationToken? cancellationToken = default)

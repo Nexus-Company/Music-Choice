@@ -51,6 +51,19 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
         return playerState;
     }
 
+    public async Task<bool> SkipTrackAsync(string? device_id, CancellationToken stoppingToken = default)
+    {
+        var request = new HttpRequestMessage()
+        {
+            RequestUri = new Uri($"{SpotifyEndPoint}/me/player/next?device_id={device_id}"),
+            Method = HttpMethod.Post
+        };
+
+        var response = await _httpClient.SendAsync(request, stoppingToken);
+
+        return response.IsSuccessStatusCode;
+    }
+
     private async void GetAuthorizationToken()
     {
         var tokenData = await _spotifyTokenStoreService.GetTokenAsync();

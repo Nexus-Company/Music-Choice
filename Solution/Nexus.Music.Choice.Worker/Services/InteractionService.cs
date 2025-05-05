@@ -22,6 +22,7 @@ internal class InteractionService : IInteractionService
         InteractContext interactContext,
         IMessageDispatcher<IStreamWriter> messageDispatcher,
         IMusicPlayerService musicPlayerService,
+        IInteractionLogService interactionLogService,
         IVoteService voteService,
         ILogger<InteractionService> logger)
     {
@@ -29,6 +30,7 @@ internal class InteractionService : IInteractionService
         _musicPlayerService = musicPlayerService;
         _voteService = voteService;
         _messageDispatcher = messageDispatcher;
+        _interactionLogService = interactionLogService;
 
         _musicPlayerService.PlayerStateChanged += PlayerStateChanged;
     }
@@ -37,7 +39,7 @@ internal class InteractionService : IInteractionService
     {
         _userTrackAdd.Add(trackId, userId);
 
-        await _musicPlayerService.AddTrackAsync(trackId, string.Empty, cancellationToken);
+        await _musicPlayerService.AddTrackAsync(trackId, cancellationToken);
         await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueAdd, trackId, userId, cancellationToken);
 
         _messageDispatcher.DispatchMessage(new Message
@@ -54,7 +56,7 @@ internal class InteractionService : IInteractionService
         {
             if (addUserId == userId)
             {
-                await _musicPlayerService.RemoveTrackAsync(trackId, string.Empty, cancellationToken);
+                await _musicPlayerService.RemoveTrackAsync(trackId, cancellationToken);
                 await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueRemove, trackId, userId, cancellationToken);
                 _userTrackAdd.Remove(trackId);
             }
@@ -72,7 +74,7 @@ internal class InteractionService : IInteractionService
 
         if (shouldBeAction)
         {
-            await _musicPlayerService.RemoveTrackAsync(trackId, string.Empty, cancellationToken);
+            await _musicPlayerService.RemoveTrackAsync(trackId, cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueRemoveByVote, trackId, null, cancellationToken);
 
             _messageDispatcher.DispatchMessage(new Message
@@ -94,13 +96,13 @@ internal class InteractionService : IInteractionService
         string trackId = string.Empty;
         _voteService.AddVote(userId, VotingType.SkipTrack);
 
-        await _interactionLogService.LogVoteAsync(userId, VotingType.SkipTrack, trackId, cancellationToken);
+        await _interactionLogService.LogVoteAsync(userId, VotingType.SkipTrack, null, cancellationToken);
 
-        bool shouldBeAction = await _voteService.ShouldActionBePerformedAsync(VotingType.SkipTrack, cancellationToken);
+        bool shouldBeAction = await _voteService.ShouldActionBePerformedAsync(VotingType.SkipTrack, cancellationToken: cancellationToken);
 
         if (shouldBeAction)
         {
-            await _musicPlayerService.SkipTrackAsync(string.Empty, cancellationToken);
+            await _musicPlayerService.SkipTrackAsync(cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.SkipTrackByVote, trackId, null, cancellationToken);
 
             _messageDispatcher.DispatchMessage(new Message

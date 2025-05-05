@@ -2,6 +2,8 @@
 using Nexus.Music.Choice.Worker.Base.Models.Enums;
 using Nexus.Music.Choice.Worker.Interfaces;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Nexus.Music.Choice.Worker.Base.Dispatcher;
 
@@ -11,7 +13,16 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
     private protected readonly IInteractionService _interactionService;
     private protected readonly IFeedbackService _feedBackService;
 
-    protected BaseCommandDispatcher(ILogger logger, IFeedbackService feedBackService, IInteractionService interactionService) : base(logger)
+    private static readonly JsonSerializerOptions jsonOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    protected BaseCommandDispatcher(
+        ILogger logger,
+        IFeedbackService feedBackService,
+        IInteractionService interactionService)
+        : base(logger)
     {
         _interactionService = interactionService;
         _feedBackService = feedBackService;
@@ -60,7 +71,28 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
 
     public async Task ProcessVote(Guid userId, object? data)
     {
+        var excp = new ArgumentException("The type of data in message is incorrect.");
 
+        if (data == null || data is not JsonElement jsonElement)
+            throw excp;
+
+        var voteData = jsonElement.Deserialize<VoteData>(jsonOptions) ?? throw excp;
+
+        switch (voteData.Type)
+        {
+            case VotingType.SkipTrack:
+                await _interactionService.VoteSkipAsync(userId);
+                break;
+            case VotingType.TrackQueueRemove:
+                if (voteData.TrackId == null)
+                    throw excp;
+
+                await _interactionService.TrackRemoveAsync(voteData.TrackId, userId);
+                break;
+            default:
+                _logger.LogWarning("Vote type {voteType} is not supported.", voteData.Type);
+                throw new ArgumentException($"Vote type {voteData.Type} is not supported.");
+        }
     }
 
     public async Task ProcessQueueChange(Guid userId, object? data)
