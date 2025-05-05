@@ -24,6 +24,7 @@ public static class DependecyInjection
     public static IServiceCollection AddInteractionServices(this IServiceCollection services)
     {
         return services.AddSingleton(new InteractContext())
+            .AddSingleton<IUserConnectionControlService, UserConnectionControlService>()
             .AddSingleton<IInteractionLogService, InteractionLogService>()
             .AddSingleton<IFeedbackService, FeedBackService>()
             .AddSingleton<IInteractionService, InteractionService>()

@@ -1,7 +1,6 @@
 ﻿using Nexus.Music.Choice.Worker.Base.Models;
 using Nexus.Music.Choice.Worker.Interfaces;
 using System.Text.Json;
-using static System.Net.Mime.MediaTypeNames;
 using System.Text.Json.Serialization;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
@@ -12,8 +11,7 @@ public class PipeReader : IStreamReader
     private readonly Thread _task;
     private readonly ILogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
-
-    public int Id => throw new NotImplementedException();
+    private readonly int _connectionId;
 
     private static readonly JsonSerializerOptions jsonOptions = new()
     {
@@ -22,7 +20,7 @@ public class PipeReader : IStreamReader
 
     public event EventHandler<Command>? CommandReceived;
 
-    public PipeReader(StreamReader reader, ILogger logger)
+    public PipeReader(StreamReader reader, int connectionId, ILogger logger)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
         _logger = logger;
@@ -54,17 +52,17 @@ public class PipeReader : IStreamReader
                 if (bytesRead > 0)
                 {
                     string text = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    _logger.LogInformation("New Interaction Received: {interaction}", text);
+                    _logger.LogInformation("New message Received: {message}", text);
                     var command = JsonSerializer.Deserialize<Command>(text, jsonOptions);
 
                     if (command == null)
                         continue;
 
-                    CommandReceived?.Invoke(this, command!);
+                    CommandReceived?.Invoke(_connectionId, command!);
                 }
                 else
                 {
-                    await Task.Delay(100, _cancellationTokenSource.Token);
+                    await Task.Delay(10, _cancellationTokenSource.Token);
                 }
             }
             catch (OperationCanceledException)

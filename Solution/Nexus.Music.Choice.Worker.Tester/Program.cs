@@ -1,9 +1,11 @@
 ﻿using Nexus.Music.Choice.Worker.Conector;
+using Nexus.Music.Choice.Worker.Conector.Messages;
 
 namespace Nexus.Music.Choice.Worker.Tester;
 
 class Program
 {
+    static List<Guid> users = [];
     static async Task Main(string[] args)
     {
         using var connector = new PipeConector();
@@ -20,9 +22,10 @@ class Program
 
         while (true)
         {
-            string input = Console.ReadLine();
+            string? input = Console.ReadLine();
+
             if (string.IsNullOrEmpty(input))
-                break;
+                continue;
 
             connector.SendMessage(input);
 

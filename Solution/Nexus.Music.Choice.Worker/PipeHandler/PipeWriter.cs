@@ -58,7 +58,7 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
                 }
                 else
                 {
-                    await Task.Delay(100, _cancellationTokenSource.Token);
+                    await Task.Delay(10, _cancellationTokenSource.Token);
                 }
             }
             catch (OperationCanceledException)

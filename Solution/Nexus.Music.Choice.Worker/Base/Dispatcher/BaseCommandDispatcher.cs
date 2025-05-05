@@ -1,9 +1,9 @@
 ﻿using Nexus.Music.Choice.Worker.Base.Models;
+using Nexus.Music.Choice.Worker.Base.Models.Data;
 using Nexus.Music.Choice.Worker.Base.Models.Enums;
+using Nexus.Music.Choice.Worker.Entities;
 using Nexus.Music.Choice.Worker.Interfaces;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Nexus.Music.Choice.Worker.Base.Dispatcher;
 
@@ -12,20 +12,18 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
 {
     private protected readonly IInteractionService _interactionService;
     private protected readonly IFeedbackService _feedBackService;
-
-    private static readonly JsonSerializerOptions jsonOptions = new()
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
+    private protected readonly IUserConnectionControlService _userControlService;
 
     protected BaseCommandDispatcher(
         ILogger logger,
         IFeedbackService feedBackService,
+        IUserConnectionControlService userControlService,
         IInteractionService interactionService)
         : base(logger)
     {
         _interactionService = interactionService;
         _feedBackService = feedBackService;
+        _userControlService = userControlService;
     }
 
     public override void RegisterStream(int connectionId, IStream stream)
@@ -44,24 +42,21 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
 
     public async void DispatchCommand(object? sender, Command command)
     {
-        if (command.Data == null || command.UserId == Guid.Empty)
-        {
-            _logger.LogWarning("Command data or UserId is null. Command: {Command}", command);
-            return;
-        }
-
         try
         {
             switch (command.ActionType)
             {
-                case ActionType.Feedback:
-                    await ProcessFeedback(command.UserId, command.Data);
+                case ActionType.TrackFeedback:
+                    await ProcessTrackFeedback(command);
                     break;
                 case ActionType.Vote:
-                    await ProcessVote(command.UserId, command.Data);
+                    await ProcessVote(command);
+                    break;
+                case ActionType.ConnectionNotify:
+                    ProcessConnectionNotify((int)sender!, command);
                     break;
                 case ActionType.QueueChange:
-                    await ProcessQueueChange(command.UserId, command.Data);
+                    await ProcessQueueChange(command);
                     break;
             }
         }
@@ -71,30 +66,53 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
         }
     }
 
-    public async Task ProcessFeedback(Guid userId, object? data)
+    private void ProcessConnectionNotify(int connectionId, Command command)
     {
+        var connectionNotifyData = command.GetCommandData<ConnectionNotifyCommandData>();
 
+        switch (connectionNotifyData.State)
+        {
+            case ConnectionState.Connect:
+                _userControlService.ConnectUsers(connectionId, connectionNotifyData.UsersId);
+                break;
+            case ConnectionState.Disconnect:
+                _userControlService.DisconnectUsers(connectionNotifyData.UsersId);
+                break;
+        }
     }
 
-    public async Task ProcessVote(Guid userId, object? data)
+    public async Task ProcessTrackFeedback(Command command)
     {
-        var excp = new ArgumentException("The type of data in message is incorrect.");
+        var feedbackData = command.GetCommandData<UserTrackFeedbackCommandData>();
 
-        if (data == null || data is not JsonElement jsonElement)
-            throw excp;
+        switch (feedbackData.Type)
+        {
+            case FeedbackType.Like:
+                await _feedBackService.TrackLikeAsync(feedbackData.UserId, feedbackData.TrackId);
+                break;
+            case FeedbackType.Dislike:
+                await _feedBackService.TrackDislikeAsync(feedbackData.UserId, feedbackData.TrackId);
+                break;
+            default:
+                _logger.LogWarning("FeedBack type {voteType} is not supported.", feedbackData.Type);
+                throw new ArgumentException($"Vote type {feedbackData.Type} is not supported.");
+        }
+    }
 
-        var voteData = jsonElement.Deserialize<VoteData>(jsonOptions) ?? throw excp;
+    public async Task ProcessVote(Command command)
+    {
+        var voteData = command.GetCommandData<VotingCommandData>();
 
         switch (voteData.Type)
         {
             case VotingType.SkipTrack:
-                await _interactionService.VoteSkipAsync(userId);
+                await _interactionService.VoteSkipAsync(voteData.UserId);
                 break;
             case VotingType.TrackQueueRemove:
                 if (voteData.TrackId == null)
-                    throw excp;
+                    throw new ArgumentException("Track id is null.");
 
-                await _interactionService.TrackRemoveAsync(voteData.TrackId, userId);
+                await _interactionService.TrackRemoveAsync(voteData.TrackId, voteData.UserId);
                 break;
             default:
                 _logger.LogWarning("Vote type {voteType} is not supported.", voteData.Type);
@@ -102,15 +120,10 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
         }
     }
 
-    public async Task ProcessQueueChange(Guid userId, object? data)
+    public async Task ProcessQueueChange(Command command)
     {
-        var excp = new ArgumentException("The type of data in message is incorrect.");
+        var queueChangeData = command.GetCommandData<QueueChangeCommandData>();
 
-        if (data == null || data is not JsonElement jsonElement)
-            throw excp;
-
-        var trackId = jsonElement.Deserialize<string>(jsonOptions) ?? throw excp;
-
-        await _interactionService.TrackAddAync(trackId, userId);
+        await _interactionService.TrackAddAync(queueChangeData.TrackId, queueChangeData.UserId);
     }
 }

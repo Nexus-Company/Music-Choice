@@ -8,6 +8,7 @@ public class InteractContext : DbContext
     public DbSet<VoteInteraction> VoteInteractions { get; set; }
     public DbSet<ActionExecuted> ActionsExecuted { get; set; }
     public DbSet<TrackFeedback> TrackFeedbacks { get; set; }
+    public DbSet<UserConnectionTrace> UserConnectionsTrace { get; set; }
 
     public InteractContext()
     {

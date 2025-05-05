@@ -1,8 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿using Nexus.Music.Choice.Worker.Conector.Base;
+using System.Collections.Concurrent;
 using System.IO.Pipes;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Nexus.Music.Choice.Worker.Conector;
 
@@ -16,11 +15,6 @@ public class PipeConector : IDisposable
     private readonly Thread _writeThread;
 
     public event EventHandler<string>? MessageReceived;
-
-    private static readonly JsonSerializerOptions jsonOptions = new()
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
 
     public PipeConector(string? serverName = null)
     {
@@ -37,14 +31,19 @@ public class PipeConector : IDisposable
         _writeThread.Start();
     }
 
-    public void SendMessage(object message)
+    public void SendMessage(BaseMessage message)
     {
-        if (message is string str)
-            _sendQueue.Enqueue(str);
+        string text = message.GetJsonTextMessage();
 
-        str = JsonSerializer.Serialize(message, jsonOptions);
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
 
-        _sendQueue.Enqueue(str);
+        _sendQueue.Enqueue(text);
+    }
+
+    public void SendMessage(string text)
+    {
+        _sendQueue.Enqueue(text);
     }
 
     private async void ReadLoop()

@@ -36,7 +36,7 @@ internal class SpotifyTokenStoreService : BaseTokenStoreService, ITokenStoreServ
 
         if (token != null)
             token.AccessToken = accessToken ?? string.Empty;
-        
+
         return token;
     }
 

@@ -4,7 +4,6 @@ using Nexus.Music.Choice.Domain.Models;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Spotify.Models;
 using Nexus.Music.Choice.Spotify.Services.Interfaces;
-using System.Threading;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
@@ -41,7 +40,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
 
         if (_lastPlayerState?.IsPlaying == true)
         {
-            var result = await _spotifyApiService.AddTrackInQueueAsync(trackId,_lastPlayerState.Device?.Id, cancellationToken);
+            var result = await _spotifyApiService.AddTrackInQueueAsync(trackId, _lastPlayerState.Device?.Id, cancellationToken);
 
             if (result)
             {

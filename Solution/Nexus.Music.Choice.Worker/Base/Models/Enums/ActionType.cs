@@ -2,7 +2,8 @@
 
 public enum ActionType
 {
-    Feedback,
+    TrackFeedback,
     Vote,
+    ConnectionNotify,
     QueueChange
 }

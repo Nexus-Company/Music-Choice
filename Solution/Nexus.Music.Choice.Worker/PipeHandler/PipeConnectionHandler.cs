@@ -1,6 +1,7 @@
 ﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
+using Nexus.Music.Choice.Worker.Services.Interfaces;
 using System.IO.Pipes;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
@@ -16,6 +17,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
     private readonly ICommandDispatcher<PipeReader> _commandDispatcher;
     private readonly IMessageDispatcher<PipeWriter> _eventDispatcher;
     private readonly IMusicPlayerService _musicPlayerService;
+    private readonly IUserConnectionControlService _userControlService;
     private int _connectionCounter = 0;
 
     private readonly List<Task> _tasks = [];
@@ -25,12 +27,14 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         ILogger<PipeConnectionHandler> logger,
         ICommandDispatcher<PipeReader> commandDispatcher,
         IMusicPlayerService musicPlayerService,
+        IUserConnectionControlService userControlService,
         IMessageDispatcher<PipeWriter> eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _commandDispatcher = commandDispatcher ?? throw new ArgumentNullException(nameof(commandDispatcher));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
-        _musicPlayerService = musicPlayerService?? throw new ArgumentNullException(nameof(musicPlayerService));
+        _musicPlayerService = musicPlayerService ?? throw new ArgumentNullException(nameof(musicPlayerService));
+        _userControlService = userControlService ?? throw new ArgumentNullException(nameof(userControlService));
     }
 
     public async void HandleConnection(NamedPipeServerStream server, CancellationToken stoppingToken)
@@ -38,7 +42,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         int connectionId = _connectionCounter;
         _connectionCounter++;
 
-        var reader = new PipeReader(new StreamReader(server), _logger);
+        var reader = new PipeReader(new StreamReader(server), connectionId, _logger);
         var writer = new PipeWriter(server, _logger);
 
         _eventDispatcher.RegisterStream(connectionId, writer);
@@ -84,6 +88,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
 
         _logger.LogInformation("Client with connection id #{id} disconnected.", connectionId);
 
+        _userControlService.DisconnectUsers(connectionId);
         _commandDispatcher.UnregisterStream(connectionId);
         _eventDispatcher.UnregisterStream(connectionId);
 

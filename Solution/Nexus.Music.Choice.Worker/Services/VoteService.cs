@@ -6,13 +6,15 @@ namespace Nexus.Music.Choice.Worker.Services;
 internal class VoteService : IVoteService, IDisposable
 {
     private readonly IMusicPlayerService _musicPlayerService;
+    private readonly IUserConnectionControlService _userControlService;
     private readonly ILogger<VoteService> _logger;
     private readonly Dictionary<KeyVotingType, HashSet<Guid>> _votingsCount = [];
     public VotingConfig VotingConfig { get; set; }
 
     public VoteService(
-        ILogger<VoteService> logger, 
-        IMusicPlayerService musicPlayerService, 
+        ILogger<VoteService> logger,
+        IMusicPlayerService musicPlayerService,
+        IUserConnectionControlService userControlService,
         IConfiguration configuration,
         VotingConfig? votingConfig = null)
     {
@@ -61,11 +63,11 @@ internal class VoteService : IVoteService, IDisposable
         switch (VotingConfig.Strategy)
         {
             case VotingStrategy.Majority:
-                int totalUsers = GetTotalActiveUsers();
+                int totalUsers = _userControlService.GetTotalActiveUsers();
                 return Task.FromResult(voteCount > (totalUsers / 2));
 
             case VotingStrategy.Unanimous:
-                totalUsers = GetTotalActiveUsers();
+                totalUsers = _userControlService.GetTotalActiveUsers();
                 return Task.FromResult(voteCount == totalUsers);
 
             case VotingStrategy.FixedThreshold:
@@ -87,7 +89,7 @@ internal class VoteService : IVoteService, IDisposable
 
     private double GetVotePercentage(VotingType votingType)
     {
-        int totalUsers = GetTotalActiveUsers();
+        int totalUsers = _userControlService.GetTotalActiveUsers();
 
         if (totalUsers == 0)
             return 0.0;
@@ -96,11 +98,6 @@ internal class VoteService : IVoteService, IDisposable
             return 0.0;
 
         return votes.Count / (double)totalUsers * 100.0;
-    }
-
-    private int GetTotalActiveUsers()
-    {
-        return 1; // Exemplo fixo, substituir pela lógica real
     }
 
     public void Dispose()

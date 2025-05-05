@@ -1,11 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Nexus.Music.Choice.Domain;
-using Nexus.Music.Choice.Domain.Models;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Spotify.Models;
 using Nexus.Music.Choice.Spotify.Services.Interfaces;
-using System.Net;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
