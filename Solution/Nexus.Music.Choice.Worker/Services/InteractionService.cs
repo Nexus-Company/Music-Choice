@@ -32,7 +32,7 @@ internal class InteractionService : IInteractionService
 
     public event EventHandler<Event> PlayerEvent;
 
-    public async Task TrackAddAync(string trackId, Guid userId, CancellationToken? cancellationToken = null)
+    public async Task TrackAddAync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
         _userTrackAdd.Add(trackId, userId);
 
@@ -47,7 +47,7 @@ internal class InteractionService : IInteractionService
         });
     }
 
-    public async Task TrackRemoveAsync(string trackId, Guid userId, CancellationToken? cancellationToken = null)
+    public async Task TrackRemoveAsync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
         if (_userTrackAdd.TryGetValue(trackId, out Guid addUserId))
         {
@@ -88,7 +88,7 @@ internal class InteractionService : IInteractionService
         }
     }
 
-    public async Task VoteSkipAsync(Guid userId, CancellationToken? cancellationToken = null)
+    public async Task VoteSkipAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         string trackId = string.Empty;
         _voteService.AddVote(userId, VotingType.SkipTrack);

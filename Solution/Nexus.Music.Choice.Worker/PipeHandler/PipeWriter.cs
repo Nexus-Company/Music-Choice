@@ -44,7 +44,7 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
                     var json = JsonSerializer.Serialize(evt);
                     await _writer.WriteAsync(json);
                     await _writer.FlushAsync();
-                    _logger.LogInformation("Message send to connection: {message}", json);
+                    _logger.LogTrace("Message send to connection: {message}", json);
                 }
                 else
                 {

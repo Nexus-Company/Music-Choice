@@ -112,6 +112,31 @@ O **Nexus Music Choice Worker** foi projetado para permitir a integração com m
 
 ---
 
+## 🔑 Variável de Ambiente Obrigatória
+
+Para garantir a segurança dos dados sensíveis, **é obrigatório definir a variável de ambiente `TOKEN_STORE_SECRET`** antes de rodar o sistema.
+
+>Essa variável é utilizada como chave para criptografia e descriptografia dos tokens armazenados localmente no disco (exceto o `AccessToken`, que fica apenas em memória).
+
+### Como definir:
+
+No terminal (para uma sessão temporária):
+```bash
+export TOKEN_STORE_SECRET="sua_chave_secreta_forte_aqui"
+```
+No Windows (Prompt de Comando ou PowerShell):
+
+```cmd
+set TOKEN_STORE_SECRET=sua_chave_secreta_forte_aqui
+```
+
+⚠ **Importante:**
+- Use uma chave **forte e imprevisível** (ex.: uma string longa gerada aleatoriamente).
+- Nunca inclua essa chave diretamente no código nem em arquivos versionados (como `appsettings.json`).
+- Sem essa variável, o sistema não conseguirá iniciar corretamente e gerará erro.
+
+---
+
 ## 📜 Licença
 
 Este projeto está licenciado sob a **MIT License**. Consulte o arquivo `LICENSE` para mais informações.

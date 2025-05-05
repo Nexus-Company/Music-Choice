@@ -9,7 +9,7 @@ using System.Web;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
-public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposable
+public class SpotifyAuthenticationService : ISpotifyApiAuthenticationService, IDisposable
 {
     public string Name => "Spotify";
 
@@ -20,8 +20,6 @@ public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposab
     private readonly ILogger<SpotifyAuthenticationService> _logger;
     private readonly IClock _clock;
     private readonly string codeVerifier = PkceUtil.GenerateCodeVerifier();
-
-    public event EventHandler<string> UpdateAccessToken;
 
     public SpotifyAuthenticationService(
         IHttpProvisioningServiceFactory httpProvisioningService,
@@ -43,7 +41,7 @@ public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposab
     {
         var tokenData = await _tokenStoreService.GetTokenAsync();
 
-        if (tokenData == null || tokenData.ExpiresIn <= _clock.Now || string.IsNullOrWhiteSpace(tokenData.AccessToken))
+        if (!CheckAuthorizationIsValid(tokenData))
         {
             _logger.LogInformation("Token is either missing or expired, attempting to refresh...");
             return await TryRefreshAsync(tokenData?.RefreshToken);
@@ -69,6 +67,22 @@ public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposab
         Environment.SetEnvironmentVariable("MC_SPOTIFY_LOGIN_URL", authorizeUrl, EnvironmentVariableTarget.User);
 
         await _httpProvisioningService.StartAsync(_configuration.RedirectUri);
+    }
+
+    public async Task WaitForAuthorizationAsync()
+    {
+        TokenData? tokenData = await _tokenStoreService.GetTokenAsync();
+
+        if (CheckAuthorizationIsValid(tokenData))
+            return;
+
+        _logger.LogInformation("Awaiting for authorzation finish for service '{service}'.", Name);
+
+        while (!CheckAuthorizationIsValid(tokenData))
+        {
+            tokenData = await _tokenStoreService.GetTokenAsync();
+            await Task.Delay(100);
+        }
     }
 
     private async Task<bool> TryAuthorizationAsync(HttpProvisioningMessageEventArgs e)
@@ -162,8 +176,12 @@ public class SpotifyAuthenticationService : IApiAuthenticationService, IDisposab
             ExpiresIn = DateTime.UtcNow.AddSeconds(token.ExpiresIn)
         };
 
-        UpdateAccessToken?.Invoke(this, token.Token);
         await _tokenStoreService.SaveTokenAsync(tokenData);
+    }
+
+    private bool CheckAuthorizationIsValid(TokenData? tokenData)
+    {
+        return tokenData != null && tokenData.ExpiresIn > _clock.Now && !string.IsNullOrWhiteSpace(tokenData.AccessToken);
     }
 
     public void Dispose()

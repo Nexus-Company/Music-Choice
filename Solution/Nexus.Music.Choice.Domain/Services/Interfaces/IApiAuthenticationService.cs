@@ -5,4 +5,5 @@ public interface IApiAuthenticationService
     public string Name { get; }
     Task<bool> CheckAuthenticationAsync();
     Task StartAuthenticationAsync();
+    Task WaitForAuthorizationAsync();
 }

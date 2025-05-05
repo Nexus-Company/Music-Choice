@@ -12,8 +12,11 @@ public static class DependecyInjectionExtension
         services
             .AddHttpClient<SpotifyAuthenticationService>();
 
-        services
-            .AddHttpClient<ISpotifyApiService, SpotifyApiService>(client =>
+        services.AddHttpClient<ISpotifyApiService, SpotifyApiService>()
+            .AddHttpMessageHandler(provider =>
+                new AuthenticatedHttpClientHandler(provider.GetRequiredService<ISpotifyApiAuthenticationService>())
+            )
+            .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.spotify.com/v1/");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Nexus.Music.Choice/1.0");
@@ -22,8 +25,25 @@ public static class DependecyInjectionExtension
 
         return services
             .AddSingleton<ISpotifyTokenStoreService, SpotifyTokenStoreService>()
-            .AddScoped<IApiAuthenticationService, SpotifyAuthenticationService>()
+            .AddScoped<ISpotifyApiAuthenticationService, SpotifyAuthenticationService>()
+            .AddScoped<IApiAuthenticationService>(sp => sp.GetRequiredService<ISpotifyApiAuthenticationService>())
             .AddSingleton<IMusicPlayerService, SpotifyMusicPlayerService>();
     }
+}
 
+public class AuthenticatedHttpClientHandler : DelegatingHandler
+{
+    private readonly IApiAuthenticationService _authService;
+
+    public AuthenticatedHttpClientHandler(ISpotifyApiAuthenticationService authService)
+    {
+        _authService = authService;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        await _authService.WaitForAuthorizationAsync();
+
+        return await base.SendAsync(request, cancellationToken);
+    }
 }

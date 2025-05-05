@@ -6,11 +6,13 @@ namespace Nexus.Music.Choice.Worker.Services;
 internal class VoteService : IVoteService, IDisposable
 {
     private readonly IMusicPlayerService _musicPlayerService;
+    private readonly ILogger<VoteService> _logger;
     private readonly Dictionary<KeyVotingType, HashSet<Guid>> _votingsCount = [];
     public VotingConfig VotingConfig { get; set; }
 
-    public VoteService(IMusicPlayerService musicPlayerService, VotingConfig? votingConfig = null)
+    public VoteService(ILogger<VoteService> logger, IMusicPlayerService musicPlayerService, VotingConfig? votingConfig = null)
     {
+        _logger = logger;
         _musicPlayerService = musicPlayerService;
         _musicPlayerService.PlayerStateChanged += PlayerStateChanged;
 
@@ -115,8 +117,7 @@ public struct KeyVotingType
     public VotingType Type { get; set; }
     public object? Data { get; set; }
 
-    public KeyVotingType(VotingType type,
-                         object? data = null)
+    public KeyVotingType(VotingType type, object? data = null)
     {
         Type = type;
         Data = data;
@@ -124,18 +125,28 @@ public struct KeyVotingType
 
     public override readonly bool Equals(object? obj)
     {
-        if (obj is KeyVotingType other)
-            return other == this;
+        if (obj is not KeyVotingType other)
+            return false;
 
-        return false;
+        // Compara Type diretamente
+        if (Type != other.Type)
+            return false;
+
+        // Trata Data nulo
+        if (Data == null && other.Data == null)
+            return true;
+
+        if (Data == null || other.Data == null)
+            return false;
+
+        return Data.Equals(other.Data);
     }
 
     public override readonly int GetHashCode()
     {
-        if (Data == null)
-            return Type.GetHashCode();
-
-        return HashCode.Combine(Type, Data.GetHashCode());
+        return Data == null
+            ? Type.GetHashCode()
+            : HashCode.Combine(Type, Data.GetHashCode());
     }
 
     public static bool operator ==(KeyVotingType left, KeyVotingType right)
