@@ -15,6 +15,11 @@ public class PipeReader : IStreamReader
 
     public int Id => throw new NotImplementedException();
 
+    private static readonly JsonSerializerOptions jsonOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public event EventHandler<Command>? CommandReceived;
 
     public PipeReader(StreamReader reader, ILogger logger)
@@ -39,12 +44,6 @@ public class PipeReader : IStreamReader
 
     private async void ReadFromPipe()
     {
-        var options = new JsonSerializerOptions
-        {
-            Converters = { new JsonStringEnumConverter() }
-        };
-
-
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
             try
@@ -56,7 +55,7 @@ public class PipeReader : IStreamReader
                 {
                     string text = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     _logger.LogInformation("New Interaction Received: {interaction}", text);
-                    var command = JsonSerializer.Deserialize<Command>(text, options);
+                    var command = JsonSerializer.Deserialize<Command>(text, jsonOptions);
 
                     if (command == null)
                         continue;

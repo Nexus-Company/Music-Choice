@@ -14,7 +14,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
 {
     private readonly ILogger<PipeConnectionHandler> _logger;
     private readonly ICommandDispatcher<PipeReader> _commandDispatcher;
-    private readonly IEventDispatcher<PipeWriter> _eventDispatcher;
+    private readonly IMessageDispatcher<PipeWriter> _eventDispatcher;
     private readonly IMusicPlayerService _musicPlayerService;
     private int _connectionCounter = 0;
 
@@ -25,7 +25,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         ILogger<PipeConnectionHandler> logger,
         ICommandDispatcher<PipeReader> commandDispatcher,
         IMusicPlayerService musicPlayerService,
-        IEventDispatcher<PipeWriter> eventDispatcher)
+        IMessageDispatcher<PipeWriter> eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _commandDispatcher = commandDispatcher ?? throw new ArgumentNullException(nameof(commandDispatcher));
@@ -53,13 +53,13 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
 
     private async Task SendServerState(PipeWriter streamWriter)
     {
-        streamWriter.AddToSendQueue(new Event()
+        streamWriter.AddToSendQueue(new Message()
         {
             MessageType = MessageType.PlayerState,
             Data = await _musicPlayerService.GetPlayerStateAsync()
         });
 
-        streamWriter.AddToSendQueue(new Event()
+        streamWriter.AddToSendQueue(new Message()
         {
             MessageType = MessageType.TrackQueue,
             Data = await _musicPlayerService.GetQueueAsync()

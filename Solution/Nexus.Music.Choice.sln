@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Music.Choice.Spotify"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Music.Choice.Domain", "Nexus.Music.Choice.Domain\Nexus.Music.Choice.Domain.csproj", "{DAA134B3-AAAC-4759-AB6B-27A635E663D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Music.Choice.Worker.Tester", "Nexus.Music.Choice.Worker.Tester\Nexus.Music.Choice.Worker.Tester.csproj", "{C26DA935-183B-4E96-9647-0F7979F5291C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{DAA134B3-AAAC-4759-AB6B-27A635E663D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAA134B3-AAAC-4759-AB6B-27A635E663D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAA134B3-AAAC-4759-AB6B-27A635E663D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C26DA935-183B-4E96-9647-0F7979F5291C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C26DA935-183B-4E96-9647-0F7979F5291C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C26DA935-183B-4E96-9647-0F7979F5291C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C26DA935-183B-4E96-9647-0F7979F5291C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

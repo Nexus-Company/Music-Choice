@@ -14,13 +14,13 @@ internal class InteractionService : IInteractionService
     private readonly IMusicPlayerService _musicPlayerService;
     private readonly IInteractionLogService _interactionLogService;
     private readonly IVoteService _voteService;
-    private readonly IEventDispatcher<IStreamWriter> _eventDispatcher;
+    private readonly IMessageDispatcher<IStreamWriter> _messageDispatcher;
 
     public Dictionary<string, Guid> _userTrackAdd = [];
 
     public InteractionService(
         InteractContext interactContext,
-        IEventDispatcher<IStreamWriter> eventDispatcher,
+        IMessageDispatcher<IStreamWriter> messageDispatcher,
         IMusicPlayerService musicPlayerService,
         IVoteService voteService,
         ILogger<InteractionService> logger)
@@ -28,9 +28,10 @@ internal class InteractionService : IInteractionService
         _logger = logger;
         _musicPlayerService = musicPlayerService;
         _voteService = voteService;
-    }
+        _messageDispatcher = messageDispatcher;
 
-    public event EventHandler<Event> PlayerEvent;
+        _musicPlayerService.PlayerStateChanged += PlayerStateChanged;
+    }
 
     public async Task TrackAddAync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
@@ -39,7 +40,7 @@ internal class InteractionService : IInteractionService
         await _musicPlayerService.AddTrackAsync(trackId, string.Empty, cancellationToken);
         await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueAdd, trackId, userId, cancellationToken);
 
-        _eventDispatcher.DispatchEvent(new Event
+        _messageDispatcher.DispatchMessage(new Message
         {
             MessageType = MessageType.Event,
             EventType = EventType.TrackQueueAdd,
@@ -74,7 +75,7 @@ internal class InteractionService : IInteractionService
             await _musicPlayerService.RemoveTrackAsync(trackId, string.Empty, cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueRemoveByVote, trackId, null, cancellationToken);
 
-            _eventDispatcher.DispatchEvent(new Event
+            _messageDispatcher.DispatchMessage(new Message
             {
                 MessageType = MessageType.Event,
                 EventType = EventType.TrackQueueRemove,
@@ -102,7 +103,7 @@ internal class InteractionService : IInteractionService
             await _musicPlayerService.SkipTrackAsync(string.Empty, cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.SkipTrackByVote, trackId, null, cancellationToken);
 
-            _eventDispatcher.DispatchEvent(new Event
+            _messageDispatcher.DispatchMessage(new Message
             {
                 MessageType = MessageType.Event,
                 EventType = EventType.SkipTrack
@@ -113,5 +114,14 @@ internal class InteractionService : IInteractionService
         {
             _logger.LogInformation("Vote skip track {trackId} action performed.", trackId);
         }
+    }
+
+    private void PlayerStateChanged(object? sender, PlayerStateChangedEventArgs e)
+    {
+        _messageDispatcher.DispatchMessage(new Message()
+        {
+            MessageType = MessageType.PlayerState,
+            Data = e.NewState
+        });
     }
 }

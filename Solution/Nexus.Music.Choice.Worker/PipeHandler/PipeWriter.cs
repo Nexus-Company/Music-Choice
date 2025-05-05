@@ -1,6 +1,7 @@
 ﻿using Nexus.Music.Choice.Worker.Interfaces;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
 
@@ -11,6 +12,11 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
     private readonly Thread _task;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly ConcurrentQueue<object> _eventQueue;
+
+    private static readonly JsonSerializerOptions jsonOptions = new()
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public PipeWriter(StreamWriter writer, ILogger<PipeConnectionHandler> logger)
     {
@@ -41,7 +47,7 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
             {
                 if (_eventQueue.TryDequeue(out var evt))
                 {
-                    var json = JsonSerializer.Serialize(evt);
+                    var json = JsonSerializer.Serialize(evt, jsonOptions);
                     await _writer.WriteAsync(json);
                     await _writer.FlushAsync();
                     _logger.LogTrace("Message send to connection: {message}", json);

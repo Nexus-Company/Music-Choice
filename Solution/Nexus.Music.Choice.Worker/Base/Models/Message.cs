@@ -2,7 +2,7 @@
 
 namespace Nexus.Music.Choice.Worker.Base.Models;
 
-public class Event
+public class Message
 {
     public MessageType MessageType { get; set; }
     public EventType? EventType { get; set; }

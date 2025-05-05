@@ -4,7 +4,7 @@ namespace Nexus.Music.Choice.Worker.PipeHandler;
 
 public class PipeWorker : BackgroundService
 {
-    private const string PipeName = "MusicChoicePipe";
+    private const string PipeName = "Music-Choice-Worker";
     private readonly ILogger<PipeWorker> _logger;
     private readonly IPipeConnectionHandler _connectionHandler;
 

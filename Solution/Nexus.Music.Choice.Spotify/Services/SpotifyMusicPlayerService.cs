@@ -31,9 +31,17 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
         throw new NotImplementedException();
     }
 
-    public Task<PlayerState> GetPlayerStateAsync(CancellationToken cancellationToken = default)
+    public async Task<PlayerState> GetPlayerStateAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(_lastPlayerState ?? new SpotifyPlayerState());
+        if (_lastPlayerState == null)
+        {
+            while (_lastPlayerState == null)
+            {
+                await Task.Delay(100, cancellationToken);
+            }
+        }
+
+        return _lastPlayerState;
     }
 
     public Task<IEnumerable<Track>> GetQueueAsync(CancellationToken cancellationToken = default)

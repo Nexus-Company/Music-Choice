@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Nexus.Music.Choice.Domain;
 using Nexus.Music.Choice.Domain.Models;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Spotify.Models;
@@ -15,16 +16,19 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
     private readonly ISpotifyTokenStoreService _spotifyTokenStoreService;
     private readonly ILogger<SpotifyApiService> _logger;
     private readonly HttpClient _httpClient;
-
+    private readonly IClock _clock;
     public SpotifyApiService(
         ISpotifyTokenStoreService authenticationService,
         HttpClient httpClient,
+        IClock clock,
         ILogger<SpotifyApiService> logger)
     {
         _spotifyTokenStoreService = authenticationService;
-        _spotifyTokenStoreService.AccessTokenChanged += AccessTokenChanged;
         _httpClient = httpClient;
         _logger = logger;
+        _clock = clock;
+
+        _spotifyTokenStoreService.AccessTokenChanged += AccessTokenChanged;
 
         GetAuthorizationToken();
     }
@@ -40,7 +44,11 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
 
         string contentStr = await response.Content.ReadAsStringAsync(stoppingToken);
 
-        return JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr)!;
+        SpotifyPlayerState playerState = JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr)!;
+
+        playerState.RetrievedAt = ((DateTimeOffset)_clock.Now).ToUnixTimeSeconds();
+
+        return playerState;
     }
 
     private async void GetAuthorizationToken()

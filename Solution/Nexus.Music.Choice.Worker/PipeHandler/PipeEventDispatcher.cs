@@ -4,14 +4,14 @@ using Nexus.Music.Choice.Worker.Interfaces;
 
 namespace Nexus.Music.Choice.Worker.PipeHandler;
 
-internal class PipeEventDispatcher : BaseDispatcher<PipeWriter>, IEventDispatcher<PipeWriter>
+internal class PipeEventDispatcher : BaseDispatcher<PipeWriter>, IMessageDispatcher<PipeWriter>
 {
     public PipeEventDispatcher(ILogger<PipeEventDispatcher> logger)
         : base(logger)
     {
     }
 
-    public void DispatchEvent(Event @event)
+    public void DispatchMessage(Message @event)
     {
         foreach (var stream in _streams.Values)
         {

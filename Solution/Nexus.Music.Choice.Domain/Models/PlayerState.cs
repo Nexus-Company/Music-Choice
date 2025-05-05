@@ -4,6 +4,7 @@ public abstract class PlayerState
 {
     public virtual bool IsPlaying { get; set; }
     public virtual long TimeStamp { get; set; }
+    public long RetrievedAt { get; set; }
     public virtual int ProgressMilisseconds { get; set; }
     public virtual Track? Item { get; set; }
 

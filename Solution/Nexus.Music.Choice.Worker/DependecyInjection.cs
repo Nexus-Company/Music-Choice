@@ -13,8 +13,8 @@ public static class DependecyInjection
     public static IServiceCollection AddIPCWorker(this IServiceCollection services)
     {
         return services
-            .AddSingleton<IEventDispatcher<PipeWriter>, PipeEventDispatcher>()
-            .AddSingleton<IEventDispatcher<IStreamWriter>>(sp => sp.GetRequiredService<IEventDispatcher<PipeWriter>>())
+            .AddSingleton<IMessageDispatcher<PipeWriter>, PipeEventDispatcher>()
+            .AddSingleton<IMessageDispatcher<IStreamWriter>>(sp => sp.GetRequiredService<IMessageDispatcher<PipeWriter>>())
             .AddSingleton<ICommandDispatcher<PipeReader>, PipeCommandDispatcher>()
             .AddSingleton<ICommandDispatcher<IStreamReader>>(sp => sp.GetRequiredService<ICommandDispatcher<PipeReader>>())
             .AddSingleton<IPipeConnectionHandler, PipeConnectionHandler>()
