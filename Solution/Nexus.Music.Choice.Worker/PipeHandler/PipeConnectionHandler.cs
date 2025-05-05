@@ -39,7 +39,7 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
         _connectionCounter++;
 
         var reader = new PipeReader(new StreamReader(server), _logger);
-        var writer = new PipeWriter(new StreamWriter(server) { AutoFlush = true }, _logger);
+        var writer = new PipeWriter(server, _logger);
 
         _eventDispatcher.RegisterStream(connectionId, writer);
         _commandDispatcher.RegisterStream(connectionId, reader);

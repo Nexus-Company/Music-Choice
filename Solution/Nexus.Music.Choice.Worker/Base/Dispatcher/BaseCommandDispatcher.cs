@@ -50,17 +50,24 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
             return;
         }
 
-        switch (command.ActionType)
+        try
         {
-            case ActionType.Feedback:
-                await ProcessFeedback(command.UserId, command.Data);
-                break;
-            case ActionType.Vote:
-                await ProcessVote(command.UserId, command.Data);
-                break;
-            case ActionType.QueueChange:
-                await ProcessQueueChange(command.UserId, command.Data);
-                break;
+            switch (command.ActionType)
+            {
+                case ActionType.Feedback:
+                    await ProcessFeedback(command.UserId, command.Data);
+                    break;
+                case ActionType.Vote:
+                    await ProcessVote(command.UserId, command.Data);
+                    break;
+                case ActionType.QueueChange:
+                    await ProcessQueueChange(command.UserId, command.Data);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing command: {Command}", command);
         }
     }
 
@@ -97,6 +104,13 @@ public abstract class BaseCommandDispatcher<T> : BaseDispatcher<T>, ICommandDisp
 
     public async Task ProcessQueueChange(Guid userId, object? data)
     {
+        var excp = new ArgumentException("The type of data in message is incorrect.");
 
+        if (data == null || data is not JsonElement jsonElement)
+            throw excp;
+
+        var trackId = jsonElement.Deserialize<string>(jsonOptions) ?? throw excp;
+
+        await _interactionService.TrackAddAync(trackId, userId);
     }
 }

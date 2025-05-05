@@ -55,6 +55,7 @@ class Program
     {
         Console.Clear();
         byte[] buffer = new byte[1024];
+        StringBuilder messageBuilder = new StringBuilder();
 
         while (true)
         {
@@ -63,12 +64,22 @@ class Program
                 int bytesRead = await pipeClient.ReadAsync(buffer);
                 if (bytesRead == 0) break;
 
-                string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                string chunk = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                messageBuilder.Append(chunk);
 
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.Write("[RECEBIDO] ");
-                Console.ResetColor();
-                Console.WriteLine(receivedMessage);
+                while (true)
+                {
+                    int newlineIndex = messageBuilder.ToString().IndexOf('\n');
+                    if (newlineIndex == -1) break;  // Ainda não chegou uma mensagem completa
+
+                    string completeMessage = messageBuilder.ToString(0, newlineIndex).Trim();
+                    messageBuilder.Remove(0, newlineIndex + 1);  // Remove a mensagem já processada
+
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write("[RECEBIDO] ");
+                    Console.ResetColor();
+                    Console.WriteLine(completeMessage);
+                }
             }
             catch (Exception ex)
             {
@@ -78,4 +89,5 @@ class Program
             }
         }
     }
+
 }

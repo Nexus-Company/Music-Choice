@@ -6,6 +6,8 @@ public abstract class PlayerState
     public virtual long TimeStamp { get; set; }
     public long RetrievedAt { get; set; }
     public virtual int ProgressMilisseconds { get; set; }
+    public virtual int? Volume { get; set; }
+    public virtual string? Repeat { get; set; }
     public virtual Track? Item { get; set; }
 
     public override bool Equals(object? obj)
@@ -14,12 +16,11 @@ public abstract class PlayerState
             return false;
 
         return Equals(Item, other.Item)
-            && IsPlaying == other.IsPlaying;
+            && IsPlaying == other.IsPlaying && Volume == other.Volume;
     }
 
     public override int GetHashCode()
     {
-        // Usa apenas os campos relevantes
-        return HashCode.Combine(Item, IsPlaying);
+        return HashCode.Combine(Item, IsPlaying, Volume);
     }
 }

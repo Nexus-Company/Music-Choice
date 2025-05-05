@@ -64,6 +64,33 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<SpotifyPlayerQueue> GetPlayerQueueAsync(CancellationToken stoppingToken = default)
+    {
+        var request = new HttpRequestMessage()
+        {
+            RequestUri = new Uri($"{SpotifyEndPoint}/me/player/queue")
+        };
+
+        var response = await _httpClient.SendAsync(request, stoppingToken);
+
+        string contentStr = await response.Content.ReadAsStringAsync(stoppingToken);
+
+        return JsonConvert.DeserializeObject<SpotifyPlayerQueue>(contentStr)!;
+    }
+
+    public async Task<bool> AddTrackInQueueAsync(string trackId, string? device_id, CancellationToken stoppingToken = default)
+    {
+        var request = new HttpRequestMessage()
+        {
+            RequestUri = new Uri($"{SpotifyEndPoint}/me/player/queue?uri=spotify:track:{trackId}&device_id={device_id}"),
+            Method = HttpMethod.Post
+        };
+
+        var response = await _httpClient.SendAsync(request, stoppingToken);
+
+        return response.IsSuccessStatusCode;
+    }
+
     private async void GetAuthorizationToken()
     {
         var tokenData = await _spotifyTokenStoreService.GetTokenAsync();

@@ -2,9 +2,10 @@
 
 public abstract class Track
 {
-    public string Id { get; set; }
-    public string Name { get; set; }
-    public int Duration { get; set; }
+    public virtual string Id { get; set; }
+    public virtual string Name { get; set; }
+    public virtual int Duration { get; set; }
+    public virtual bool Explit { get; set; }
 
     public override bool Equals(object? obj)
     {
@@ -16,7 +17,6 @@ public abstract class Track
 
     public override int GetHashCode()
     {
-        // Usa apenas os campos relevantes
-        return HashCode.Combine(Id, Name, Duration);
+        return HashCode.Combine(Id, Name, Duration, Explit);
     }
 }

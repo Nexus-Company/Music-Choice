@@ -1,4 +1,6 @@
-﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
+﻿using Microsoft.Extensions.Configuration;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
+using Nexus.Music.Choice.Spotify.Services;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
 
 namespace Nexus.Music.Choice.Worker.Services;
@@ -10,7 +12,11 @@ internal class VoteService : IVoteService, IDisposable
     private readonly Dictionary<KeyVotingType, HashSet<Guid>> _votingsCount = [];
     public VotingConfig VotingConfig { get; set; }
 
-    public VoteService(ILogger<VoteService> logger, IMusicPlayerService musicPlayerService, VotingConfig? votingConfig = null)
+    public VoteService(
+        ILogger<VoteService> logger, 
+        IMusicPlayerService musicPlayerService, 
+        IConfiguration configuration,
+        VotingConfig? votingConfig = null)
     {
         _logger = logger;
         _musicPlayerService = musicPlayerService;
@@ -20,16 +26,10 @@ internal class VoteService : IVoteService, IDisposable
         {
             if (votingType == VotingType.TrackQueueRemove)
                 continue;
-
             _votingsCount.Add(new KeyVotingType(votingType), []);
         }
 
-        VotingConfig = votingConfig ?? new VotingConfig
-        {
-            Strategy = VotingStrategy.FixedThreshold,
-            Threshold = 3,
-            Percentage = 0.75
-        };
+        VotingConfig = votingConfig ?? configuration.GetSection("Spotify").Get<VotingConfig>()!;
     }
 
     public void AddVote(Guid userId, VotingType votingType, object? data = null)

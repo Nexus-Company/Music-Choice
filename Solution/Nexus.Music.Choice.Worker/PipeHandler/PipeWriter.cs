@@ -1,5 +1,6 @@
 ﻿using Nexus.Music.Choice.Worker.Interfaces;
 using System.Collections.Concurrent;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,7 +8,7 @@ namespace Nexus.Music.Choice.Worker.PipeHandler;
 
 internal class PipeWriter : IStream, IStreamWriter, IDisposable
 {
-    private readonly StreamWriter _writer;
+    private readonly Stream _stream;
     private readonly ILogger<PipeConnectionHandler> _logger;
     private readonly Thread _task;
     private readonly CancellationTokenSource _cancellationTokenSource;
@@ -18,9 +19,9 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
         Converters = { new JsonStringEnumConverter() }
     };
 
-    public PipeWriter(StreamWriter writer, ILogger<PipeConnectionHandler> logger)
+    public PipeWriter(Stream stream, ILogger<PipeConnectionHandler> logger)
     {
-        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cancellationTokenSource = new CancellationTokenSource();
         _eventQueue = new ConcurrentQueue<object>();
@@ -48,9 +49,12 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
                 if (_eventQueue.TryDequeue(out var evt))
                 {
                     var json = JsonSerializer.Serialize(evt, jsonOptions);
-                    await _writer.WriteAsync(json);
-                    await _writer.FlushAsync();
-                    _logger.LogTrace("Message send to connection: {message}", json);
+                    var bytes = Encoding.UTF8.GetBytes(json + "\n"); // Delimitador para mensagens
+
+                    await _stream.WriteAsync(bytes, _cancellationTokenSource.Token);
+                    await _stream.FlushAsync(_cancellationTokenSource.Token);
+
+                    _logger.LogTrace("Message sent to connection (bytes): {message}", json);
                 }
                 else
                 {
@@ -59,12 +63,11 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
             }
             catch (OperationCanceledException)
             {
-                // Graceful exit on cancellation  
-                break;
+                break; // Graceful exit
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while writing to pipe.");
+                _logger.LogError(ex, "Error occurred while writing bytes to pipe.");
             }
         }
     }
@@ -73,7 +76,7 @@ internal class PipeWriter : IStream, IStreamWriter, IDisposable
     {
         _cancellationTokenSource.Cancel();
         _task.Join();
-        _writer.Dispose();
+        _stream.Dispose();
         _cancellationTokenSource.Dispose();
 
         GC.SuppressFinalize(this);

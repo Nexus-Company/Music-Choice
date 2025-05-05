@@ -37,7 +37,10 @@ internal class InteractionService : IInteractionService
 
     public async Task TrackAddAync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
-        _userTrackAdd.Add(trackId, userId);
+        var playerState = await _musicPlayerService.GetPlayerStateAsync(cancellationToken);
+
+        if (!_userTrackAdd.TryAdd(trackId, userId) || playerState?.Item?.Id == trackId)
+            throw new ArgumentException("Music already added in queue.");
 
         await _musicPlayerService.AddTrackAsync(trackId, cancellationToken);
         await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueAdd, trackId, userId, cancellationToken);
@@ -120,6 +123,8 @@ internal class InteractionService : IInteractionService
 
     private void PlayerStateChanged(object? sender, PlayerStateChangedEventArgs e)
     {
+        _ = _userTrackAdd.Remove(e.NewState?.Item?.Id ?? string.Empty);
+
         _messageDispatcher.DispatchMessage(new Message()
         {
             MessageType = MessageType.PlayerState,

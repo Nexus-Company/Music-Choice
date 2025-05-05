@@ -13,6 +13,10 @@ public class SpotifyPlayerState : PlayerState
 
     [JsonProperty("progress_ms")]
     public override int ProgressMilisseconds { get; set; }
+    [JsonProperty("repeat_state")]
+    public override string? Repeat { get; set; }
+
+    public override int? Volume { get => Device?.Volume; set => base.Volume = value; }
 
     public SpotifyDevice? Device { get; set; }
 

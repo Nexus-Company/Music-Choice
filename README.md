@@ -62,24 +62,29 @@ A aplicação foi projetada com foco em modularidade e separação de responsabi
 
 ---
 
-## ⚙️ Configuração
 
-As principais configurações ficam nos arquivos `appsettings.json` e `appsettings.Development.json`. Alguns exemplos importantes:
+## ⚙️ VotingConfiguration
 
-| Parâmetro                            | Função                                                                                          |
-|--------------------------------------|------------------------------------------------------------------------------------------------|
-| `MinimumVotePercentage`              | Percentual mínimo de votos necessários para pular uma música (ex.: 60%).                        |
-| `MinimumActiveParticipants`          | Número mínimo de usuários ativos para habilitar interações como votações.                      |
-| `MaxSongsPerUserPerWindow`           | Limite de músicas que um usuário pode adicionar em um período configurado.                     |
-| `SongAdditionWindowMinutes`          | Janela de tempo (em minutos) para controle do limite por usuário.                              |
-| `AllowedGenres`                      | Lista de gêneros musicais permitidos.                                                         |
-| `ActiveMusicPlatform`                | Plataforma de streaming em uso (Spotify, Apple Music, Deezer, etc.).                           |
-| `Logging.Level`                      | Nível de detalhamento dos logs.                                                                |
-| `Metrics.Enabled`                    | Ativa/desativa a coleta de métricas em tempo real.                                             |
-| `RetryPolicy.MaxRetries`             | Número máximo de tentativas ao lidar com falhas de comunicação com serviços externos.          |
-| `MultiSound.Enabled`                 | Ativa/desativa o gerenciamento de múltiplas caixas de som e dispositivos locais.               |
+As principais configurações ficam nos arquivos `appsettings.json`.
 
----
+### Configuração de votações
+Configurações relacionadas a lógica de votação para executar ações no sistema.
+
+| Parâmetro    | Função                                                                                 |
+| ------------ | -------------------------------------------------------------------------------------- |
+| `Strategy`   | Estratégia de votação usada (`Majority`, `Unanimous`, `FixedThreshold`, `Percentage`). |
+| `Threshold`  | Número fixo de votos necessários (usado quando a estratégia é `FixedThreshold`).       |
+| `Percentage` | Percentual de votos necessários (usado quando a estratégia é `Percentage`).            |
+
+Exemplo no `appsettings.json`:
+
+```json
+"VotingConfiguration": {
+    "Strategy": "FixedThreshold",
+    "Threshold": 1,
+    "Percentage": 0
+}
+```
 
 ## 📊 Logs e Métricas
 

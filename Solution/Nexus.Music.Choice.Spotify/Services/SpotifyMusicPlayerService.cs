@@ -15,7 +15,10 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public event EventHandler<PlayerStateChangedEventArgs>? PlayerStateChanged;
     private SpotifyPlayerState? _lastPlayerState;
+    private IEnumerable<SpotifyTrack> _userQueue;
+#pragma warning disable IDE0052 // Remover membros particulares não lidos
     private readonly Timer _timer;
+#pragma warning restore IDE0052 // Remover membros particulares não lidos
     public SpotifyMusicPlayerService(
         ISpotifyApiService apiService,
         ILogger<SpotifyMusicPlayerService> logger)
@@ -26,9 +29,33 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
         _timer = new Timer(async _ => await CheckPlayerStateAsync(), null, 0, 500);
     }
 
-    public Task<bool> AddTrackAsync(string songId, CancellationToken cancellationToken = default)
+    public async Task<bool> AddTrackAsync(string trackId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (_lastPlayerState == null)
+        {
+            while (_lastPlayerState == null)
+            {
+                await Task.Delay(100, cancellationToken);
+            }
+        }
+
+        if (_lastPlayerState?.IsPlaying == true)
+        {
+            var result = await _spotifyApiService.AddTrackInQueueAsync(trackId,_lastPlayerState.Device?.Id, cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("Track skipped successfully.");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to skip track.");
+            }
+
+            return result;
+        }
+
+        return false;
     }
 
     public async Task<PlayerState> GetPlayerStateAsync(CancellationToken cancellationToken = default)
@@ -46,9 +73,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
 
     public Task<IEnumerable<Track>> GetQueueAsync(CancellationToken cancellationToken = default)
     {
-        IEnumerable<Track> queue = [];
-
-        return Task.FromResult(queue);
+        return Task.FromResult(_userQueue.Select(trk => (Track)trk));
     }
 
     public Task<bool> RemoveTrackAsync(string songId, CancellationToken cancellationToken = default)
@@ -100,6 +125,11 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
             if (_lastPlayerState == null || !currentState.Equals(_lastPlayerState))
             {
                 _logger.LogInformation("Player State Chagend new player State is: {state}", JsonConvert.SerializeObject(currentState));
+
+                var queue = await _spotifyApiService.GetPlayerQueueAsync();
+
+                _userQueue = queue.Queue;
+
                 var args = new PlayerStateChangedEventArgs(_lastPlayerState, currentState);
                 PlayerStateChanged?.Invoke(this, args);
                 _lastPlayerState = currentState;
