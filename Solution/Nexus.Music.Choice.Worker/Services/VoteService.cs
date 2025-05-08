@@ -40,6 +40,8 @@ internal class VoteService : IVoteService, IDisposable
                 return;
 
             votes.Add(userId);
+
+            _logger.LogInformation("Vote '{type}' for user '{user}' computed.", votingType, userId);
         }
         else
         {
@@ -107,7 +109,7 @@ internal class VoteService : IVoteService, IDisposable
     }
 }
 
-public struct KeyVotingType
+internal struct KeyVotingType
 {
     public VotingType Type { get; set; }
     public object? Data { get; set; }

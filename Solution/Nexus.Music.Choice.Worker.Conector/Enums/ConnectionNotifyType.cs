@@ -2,6 +2,6 @@
 
 public enum ConnectionNotifyType
 {
-    Connected,
-    Disconnected
+    Connect,
+    Disconnect
 }

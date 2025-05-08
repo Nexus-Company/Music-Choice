@@ -3,10 +3,9 @@ using Nexus.Music.Choice.Worker.Conector.Messages;
 
 namespace Nexus.Music.Choice.Worker.Tester;
 
-class Program
+public class Program
 {
-    static List<Guid> users = [];
-    static async Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
         using var connector = new PipeConector();
 
@@ -20,21 +19,25 @@ class Program
 
         connector.Start();
 
+        CommandProcessor commandProcessor = new(connector, OnExit);
+
         while (true)
         {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("> ");
+            Console.ForegroundColor = ConsoleColor.White;
+
             string? input = Console.ReadLine();
 
             if (string.IsNullOrEmpty(input))
                 continue;
 
-            connector.SendMessage(input);
-
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("[ENVIADO] ");
-            Console.ResetColor();
-            Console.WriteLine(input);
+            await commandProcessor.ProcessAsync(input);
         }
+    }
 
-        Console.WriteLine("Encerrando conexão...");
+    private static void OnExit()
+    {
+
     }
 }

@@ -96,8 +96,8 @@ internal class InteractionService : IInteractionService
 
     public async Task VoteSkipAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        string trackId = string.Empty;
-        _voteService.AddVote(userId, VotingType.SkipTrack);
+        string? trackId = _musicPlayerService.PlayerState?.Item?.Id;
+        _voteService.AddVote(userId, VotingType.SkipTrack, trackId);
 
         await _interactionLogService.LogVoteAsync(userId, VotingType.SkipTrack, null, cancellationToken);
 
@@ -121,9 +121,15 @@ internal class InteractionService : IInteractionService
         }
     }
 
+    private void CheckPlayerState()
+    {
+
+    }
+
     private void PlayerStateChanged(object? sender, PlayerStateChangedEventArgs e)
     {
         _ = _userTrackAdd.Remove(e.NewState?.Item?.Id ?? string.Empty);
+        _voteService.ResetVotesForAction(VotingType.SkipTrack, e.NewState?.Item?.Id);
 
         _messageDispatcher.DispatchMessage(new Message()
         {

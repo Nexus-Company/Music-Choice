@@ -21,9 +21,9 @@ public class QueueChangeMessage : BaseMessage
         return JsonSerializer.Serialize(new
         {
             ActionType = "QueueChange",
-            UserId,
             Data = new
             {
+                UserId,
                 TrackId,
                 Position
             }

@@ -26,11 +26,11 @@ public class VoteMessage : BaseMessage
         return JsonSerializer.Serialize(new
         {
             ActionType = "Vote",
-            UserId,
             Data = new
             {
                 Type,
-                TrackId
+                TrackId,
+                UserId
             }
         }, JsonSerializerOptions);
     }

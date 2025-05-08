@@ -17,6 +17,8 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     private IEnumerable<SpotifyTrack> _userQueue;
 #pragma warning disable IDE0052 // Remover membros particulares não lidos
     private readonly Timer _timer;
+
+    public PlayerState? PlayerState { get => _lastPlayerState; }
 #pragma warning restore IDE0052 // Remover membros particulares não lidos
     public SpotifyMusicPlayerService(
         ISpotifyApiService apiService,
@@ -24,6 +26,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
     {
         _logger = logger;
         _spotifyApiService = apiService;
+        _userQueue = [];
 
         _timer = new Timer(async _ => await CheckPlayerStateAsync(), null, 0, 500);
     }
@@ -121,7 +124,7 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
         {
             var currentState = await _spotifyApiService.GetPlayerStateAsync();
 
-            if (_lastPlayerState == null || !currentState.Equals(_lastPlayerState))
+            if (currentState != null && (_lastPlayerState == null || !(currentState?.Equals(_lastPlayerState) ?? false)))
             {
                 _logger.LogInformation("Player State Chagend new player State is: {state}", JsonConvert.SerializeObject(currentState));
 

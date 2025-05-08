@@ -31,7 +31,7 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
         GetAuthorizationToken();
     }
 
-    public async Task<SpotifyPlayerState> GetPlayerStateAsync(CancellationToken stoppingToken = default)
+    public async Task<SpotifyPlayerState?> GetPlayerStateAsync(CancellationToken stoppingToken = default)
     {
         var request = new HttpRequestMessage()
         {
@@ -42,7 +42,10 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
 
         string contentStr = await response.Content.ReadAsStringAsync(stoppingToken);
 
-        SpotifyPlayerState playerState = JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr)!;
+        SpotifyPlayerState? playerState = JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr);
+
+        if (playerState == null)
+            return null;
 
         playerState.RetrievedAt = ((DateTimeOffset)_clock.Now).ToUnixTimeSeconds();
 

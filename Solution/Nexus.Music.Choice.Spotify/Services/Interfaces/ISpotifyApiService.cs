@@ -7,7 +7,7 @@ public interface ISpotifyApiService : IApiService
 {
     Task<bool> AddTrackInQueueAsync(string trackId, string? device_id, CancellationToken stoppingToken = default);
     Task<SpotifyPlayerQueue> GetPlayerQueueAsync(CancellationToken stoppingToken = default);
-    Task<SpotifyPlayerState> GetPlayerStateAsync(CancellationToken stoppingToken = default);
+    Task<SpotifyPlayerState?> GetPlayerStateAsync(CancellationToken stoppingToken = default);
     Task<bool> SkipTrackAsync(string? id, CancellationToken cancellationToken = default);
 }
 

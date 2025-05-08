@@ -4,15 +4,15 @@ using System.Text.Json;
 
 namespace Nexus.Music.Choice.Worker.Conector.Messages;
 
-internal class ConnectionNotifyMessage : BaseMessage
+public class ConnectionNotifyMessage : BaseMessage
 {
     public IEnumerable<Guid> UsersId { get; set; }
-    public ConnectionNotifyType NotifyType { get; set; }
+    public ConnectionNotifyType State { get; set; }
 
-    public ConnectionNotifyMessage(IEnumerable<Guid> usersId, ConnectionNotifyType notifyType)
+    public ConnectionNotifyMessage(IEnumerable<Guid> usersId, ConnectionNotifyType state)
     {
         UsersId = usersId;
-        NotifyType = notifyType;
+        State = state;
     }
 
     public ConnectionNotifyMessage(Guid user, ConnectionNotifyType notifyType)
@@ -29,7 +29,7 @@ internal class ConnectionNotifyMessage : BaseMessage
             Data = new
             {
                 UsersId,
-                NotifyType
+                State
             }
         }, JsonSerializerOptions);
     }
