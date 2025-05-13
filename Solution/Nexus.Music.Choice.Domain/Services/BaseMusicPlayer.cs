@@ -143,7 +143,7 @@ public abstract class BaseMusicPlayer<TPlayerState>
         var currentList = currentQueue.ToList();
         var lastIndex = currentList.Count - 1;
 
-        // Verifica se todos os tracks adicionados estão no final da fila
+        // Identifica os índices das faixas adicionadas
         var addedIndexes = addedList
             .Select(track => new
             {
@@ -153,11 +153,38 @@ public abstract class BaseMusicPlayer<TPlayerState>
             .Where(x => x.Index >= 0)
             .ToList();
 
-        // Se qualquer música estiver antes do final, considera reorder
         var totalAdded = addedList.Count;
         var minExpectedIndex = currentList.Count - totalAdded;
 
         var anyInsertedBeforeEnd = addedIndexes.Any(x => x.Index < minExpectedIndex);
+
+        // Quando é uma única faixa adicionada
+        if (addedList.Count == 1)
+        {
+            var added = addedIndexes.FirstOrDefault();
+            if (added is null)
+                return false;
+
+            // Se foi adicionada fora do final da fila, envia a posição
+            if (added.Index < lastIndex)
+            {
+                TrackQueueChanged?.Invoke(this,
+                    new TrackQueueChangedEventArgs(
+                        added.Track.Id,
+                        TrackQueueEvent.Added,
+                        added.Index));
+
+                return true;
+            }
+
+            // Adicionada ao final da fila
+            TrackQueueChanged?.Invoke(this,
+                new TrackQueueChangedEventArgs(added.Track.Id, TrackQueueEvent.Added));
+
+            return true;
+        }
+
+        // Se qualquer música foi inserida antes do final, considera reorder
         if (anyInsertedBeforeEnd)
         {
             TrackQueueChanged?.Invoke(this,

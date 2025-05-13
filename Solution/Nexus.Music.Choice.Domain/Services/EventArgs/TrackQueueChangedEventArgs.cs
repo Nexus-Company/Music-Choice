@@ -9,9 +9,9 @@ public class TrackQueueChangedEventArgs : System.EventArgs
     public string? TrackId { get; private set; }
     public int? Position { get; private set; }
     public TrackQueueEvent EventType { get; private set; }
-    public IEnumerable<Track>? Queue { get; private set; }
+    public IEnumerable<Track>? Items { get; private set; }
 
-    public TrackQueueChangedEventArgs(string? trackId, TrackQueueEvent eventType, int position = 0)
+    public TrackQueueChangedEventArgs(string? trackId, TrackQueueEvent eventType, int? position = null)
     {
         TrackId = trackId;
         EventType = eventType;
@@ -21,6 +21,6 @@ public class TrackQueueChangedEventArgs : System.EventArgs
     public TrackQueueChangedEventArgs(TrackQueueEvent eventType, IEnumerable<Track> queue)
     {
         EventType = eventType;
-        Queue = queue;
+        Items = queue;
     }
 }

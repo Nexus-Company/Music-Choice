@@ -137,6 +137,21 @@ internal class InteractionService : IInteractionService
                 args.Actor = userId;
         }
 
+        if (args.EventType == TrackQueueEvent.Removed)
+        {
+            if (!string.IsNullOrEmpty(args.TrackId) && _userTrackAdd.ContainsKey(args.TrackId))
+            {
+                _userTrackAdd.Remove(args.TrackId);
+                return;
+            }
+
+            foreach (var track in args.Items ?? [])
+            {
+                if (_userTrackAdd.ContainsKey(track.Id))
+                    _userTrackAdd.Remove(track.Id);
+            }
+        }
+
         _messageDispatcher.DispatchMessage(new Message(new TrackQueueChangedMessageData(args)));
     }
 

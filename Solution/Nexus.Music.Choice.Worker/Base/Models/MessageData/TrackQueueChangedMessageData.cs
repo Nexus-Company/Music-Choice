@@ -13,27 +13,27 @@ internal class TrackQueueChangedMessageData : Message.IMessageData
     public string? TrackId { get; private set; }
     public int? Position { get; private set; }
     public TrackQueueEvent EventType { get; private set; }
-    public IEnumerable<Track>? Queue { get; private set; }
+    public IEnumerable<Track>? Items { get; private set; }
 
     public TrackQueueChangedMessageData(
         TrackQueueEvent eventType,
         Guid? actor = null,
         string? trackId = null,
         int? position = null,
-        IEnumerable<Track>? queue = null)
+        IEnumerable<Track>? items = null)
     {
         EventType = eventType;
         Actor = actor;
         TrackId = trackId;
-        Queue = queue;
+        Items = items;
         Position = position;
 
-        if (TrackId == null && Queue == null)
+        if (TrackId == null && Items == null)
             throw new ArgumentNullException("TrackId and Queue cannot be null.");
     }
 
     public TrackQueueChangedMessageData(TrackQueueChangedEventArgs args)
-        : this(args.EventType, args.Actor, args.TrackId, args.Position, args.Queue)
+        : this(args.EventType, args.Actor, args.TrackId, args.Position, args.Items)
     {
 
     }
