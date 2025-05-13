@@ -1,5 +1,4 @@
-﻿using Nexus.Music.Choice.Worker.Base.Models;
-using Nexus.Music.Choice.Worker.Interfaces;
+﻿using Nexus.Music.Choice.Worker.Interfaces;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;

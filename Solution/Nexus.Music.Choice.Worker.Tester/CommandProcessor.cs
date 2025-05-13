@@ -12,12 +12,14 @@ interface ICommand
 public class CommandProcessor
 {
     private readonly Dictionary<string, ICommand> _commands = new(StringComparer.OrdinalIgnoreCase);
-
+    private readonly ILocalUsersControl _localUsersControl;
     public CommandProcessor(PipeConector connector, Action onExit)
     {
+        _localUsersControl = new LocalUsersControl();
         _commands["vote"] = new VoteCommand(connector);
-        _commands["users"] = new UsersCommand(connector);
+        _commands["users"] = new UsersCommand(connector, _localUsersControl);
         _commands["quit"] = new ExitCommand(onExit);
+        _commands["queue"] = new QueueCommand(connector, _localUsersControl);
     }
 
     public async Task<bool> ProcessAsync(string input)

@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Nexus.Music.Choice.Worker.Conector.Base;
-using Nexus.Music.Choice.Worker.Conector.EventData;
 using System.Collections.Concurrent;
 using System.IO.Pipes;
 using System.Text;

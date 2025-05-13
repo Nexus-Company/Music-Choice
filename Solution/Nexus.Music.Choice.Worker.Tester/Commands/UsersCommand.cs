@@ -7,11 +7,13 @@ namespace Nexus.Music.Choice.Worker.Tester.Commands;
 
 class UsersCommand : ICommand
 {
-    PipeConector _pipeConector;
+    private readonly PipeConector _pipeConector;
+    private readonly ILocalUsersControl _localUsersControl;
 
-    public UsersCommand(PipeConector pipeConector)
+    public UsersCommand(PipeConector pipeConector, ILocalUsersControl localUsersControl)
     {
         _pipeConector = pipeConector;
+        _localUsersControl = localUsersControl;
     }
 
     public string Name => "users";
@@ -39,12 +41,14 @@ class UsersCommand : ICommand
             if (ids != null)
             {
                 _pipeConector.SendMessage(new ConnectionNotifyMessage(ids, connectionType));
+                _localUsersControl.ChangeUsersConnection(ids, connectionType);
 
                 Console.WriteLine($"User '{parts[1]}' connection state '{connectionType}' changed.");
             }
             else if (Guid.TryParse(parts[1], out var userId))
             {
                 _pipeConector.SendMessage(new ConnectionNotifyMessage([userId], connectionType));
+                _localUsersControl.ChangeUsersConnection([userId], connectionType);
 
                 Console.WriteLine($"User '{userId}' connection state '{connectionType}' changed.");
             }
