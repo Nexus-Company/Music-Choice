@@ -1,4 +1,5 @@
 ﻿using Nexus.Music.Choice.Domain.Models;
+using Nexus.Music.Choice.Domain.Services.Enums;
 using Nexus.Music.Choice.Domain.Services.EventArgs;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
@@ -130,6 +131,12 @@ internal class InteractionService : IInteractionService
 
     private void TrackQueueChanged(object? sender, TrackQueueChangedEventArgs args)
     {
+        if (args.EventType == TrackQueueEvent.Added && !string.IsNullOrEmpty(args.TrackId))
+        {
+            if (_userTrackAdd.TryGetValue(args.TrackId, out Guid userId))
+                args.Actor = userId;
+        }
+
         _messageDispatcher.DispatchMessage(new Message(new TrackQueueChangedMessageData(args)));
     }
 

@@ -47,7 +47,10 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
             var result = await _spotifyApiService.AddTrackInQueueAsync(trackId, _lastPlayerState.Device?.Id, cancellationToken);
 
             if (result)
+            {
                 _logger.LogInformation("Track added to queue successfully.");
+                StartExecuteCheckQueueState();
+            }
             else
                 _logger.LogWarning("Failed to add track to queue.");
 
@@ -105,13 +108,12 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
             {
                 _logger.LogInformation("Player State Changed. New player state: {state}", JsonConvert.SerializeObject(currentState));
 
-                var queue = await _spotifyApiService.GetPlayerQueueAsync();
-                _userQueue = queue.Queue;
-
                 var @event = GetPlayerEvent(_lastPlayerState, currentState);
                 var args = new PlayerStateChangedEventArgs(@event, _lastPlayerState, currentState);
+               
                 PlayerStateChanged?.Invoke(this, args);
                 _lastPlayerState = currentState;
+                StartExecuteCheckQueueState();
             }
         }
         catch (Exception ex)
@@ -156,4 +158,111 @@ public class SpotifyMusicPlayerService : IMusicPlayerService
             await Task.Delay(200, cancellationToken);
         }
     }
+
+    #region Queue List
+
+    private void StartExecuteCheckQueueState()
+    {
+#pragma warning disable CA2016 // Encaminhe o parâmetro 'CancellationToken' para os métodos
+        _ = Task.Run(CheckQueueStateAsync); // Execute CheckQueueStateAsync without blocking the current flow  
+#pragma warning restore CA2016 // Encaminhe o parâmetro 'CancellationToken' para os métodos
+    }
+    private async Task CheckQueueStateAsync()
+    {
+        try
+        {
+            var currentQueue = await _spotifyApiService.GetPlayerQueueAsync();
+            var previousQueue = _userQueue;
+
+            var currentIds = currentQueue.Queue.Select(t => t.Id).ToArray();
+            var previousIds = previousQueue.Select(t => t.Id).ToArray();
+
+            var addedIds = currentIds.Where(id => !previousIds.Contains(id)).ToArray();
+            var removedIds = previousIds.Where(id => !currentIds.Contains(id)).ToArray();
+
+            _userQueue = currentQueue.Queue;
+
+            // 1. Added
+            var addedHandled = HandleAddedTracks(currentQueue.Queue, addedIds);
+
+            // 2. Removed
+            var removedHandled = HandleRemovedTracks(previousQueue, removedIds);
+
+            // 3. Reordered (somente se não for uma simples adição ou remoção)
+            bool isSingleAddition = addedIds.Length == 1;
+            bool isSingleRemoval = removedIds.Length == 1 && _lastPlayerState?.Track?.Id == removedIds[0];
+
+            if (!addedHandled && !removedHandled && !isSingleAddition && !isSingleRemoval)
+            {
+                HandleReorderedTracks(previousIds, currentIds, currentQueue.Queue);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to check queue state.");
+        }
+    }
+
+
+    private bool HandleAddedTracks(IEnumerable<SpotifyTrack> currentQueue, IEnumerable<string> addedIds)
+    {
+        var addedList = addedIds.ToList();
+        if (addedList.Count == 0)
+            return false;
+
+        var currentList = currentQueue.ToList();
+
+        foreach (var id in addedList)
+        {
+            var index = currentList.FindIndex(t => t.Id == id);
+            if (index >= 0)
+            {
+                TrackQueueChanged?.Invoke(this, new TrackQueueChangedEventArgs(id, TrackQueueEvent.Added, index));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool HandleRemovedTracks(IEnumerable<SpotifyTrack> previousQueue, IEnumerable<string> removedIds)
+    {
+        var removedList = removedIds.ToList();
+        if (removedList.Count == 0)
+            return false;
+
+        if (removedList.Count == 1 && _lastPlayerState?.Track?.Id == removedList.First())
+            return false;
+
+        var removedTracks = previousQueue
+            .Where(track => removedList.Contains(track.Id))
+            .ToList();
+
+        if (removedTracks.Count == 1)
+        {
+            TrackQueueChanged?.Invoke(this,
+                new TrackQueueChangedEventArgs(removedTracks[0].Id, TrackQueueEvent.Removed));
+        }
+        else
+        {
+            TrackQueueChanged?.Invoke(this,
+                new TrackQueueChangedEventArgs(TrackQueueEvent.Removed, removedTracks));
+        }
+
+        return true;
+    }
+
+    private bool HandleReorderedTracks(string[] previousIds, string[] currentIds, IEnumerable<SpotifyTrack> currentQueue)
+    {
+        if (!previousIds.SequenceEqual(currentIds) && previousIds.Length == currentIds.Length)
+        {
+            TrackQueueChanged?.Invoke(this,
+                new TrackQueueChangedEventArgs(TrackQueueEvent.Reordered, currentQueue.ToList()));
+            return true;
+        }
+
+        return false;
+    }
+    #endregion
+
 }
