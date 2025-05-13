@@ -1,4 +1,5 @@
 ﻿using Nexus.Music.Choice.Domain;
+using Nexus.Music.Choice.Domain.Services.EventArgs;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using System.Net;
 
@@ -10,7 +11,7 @@ internal class HttpProvisioningService : IHttpProvisioningService
     private readonly IClock _clock;
     private readonly HttpListener _httpListener;
 
-    public event HttpMessageReceivedDelegate HttpMessageReceived;
+    public event HttpMessageReceivedDelegate? HttpMessageReceived;
     public bool IsRunning => _httpListener.IsListening;
 
     public HttpProvisioningService(IClock clock, ILogger<HttpProvisioningService> logger)
@@ -42,6 +43,12 @@ internal class HttpProvisioningService : IHttpProvisioningService
     private async Task<bool> ProcessRequestAsync(HttpListenerContext context)
     {
         _logger.LogDebug($"Received request: {context.Request.HttpMethod} {context.Request.Url}");
+
+        if (HttpMessageReceived == null)
+        {
+            await StopAsync();
+            return false;
+        }
 
         bool success = await HttpMessageReceived.Invoke(new HttpProvisioningMessageEventArgs
         {

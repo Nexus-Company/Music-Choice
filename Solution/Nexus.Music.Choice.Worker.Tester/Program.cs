@@ -1,5 +1,5 @@
-﻿using Nexus.Music.Choice.Worker.Conector;
-using Nexus.Music.Choice.Worker.Conector.Messages;
+﻿using Newtonsoft.Json;
+using Nexus.Music.Choice.Worker.Conector;
 
 namespace Nexus.Music.Choice.Worker.Tester;
 
@@ -14,7 +14,7 @@ public class Program
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.Write("[RECEBIDO] ");
             Console.ResetColor();
-            Console.WriteLine(message);
+            Console.WriteLine(JsonConvert.SerializeObject(message));
         };
 
         connector.Start();

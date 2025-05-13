@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Nexus.Music.Choice.Worker.Services;
 using System.Text.Json;
 
 namespace Nexus.Music.Choice.Worker.Entities.Configuration;

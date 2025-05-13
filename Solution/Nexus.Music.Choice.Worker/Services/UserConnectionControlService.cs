@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Worker.Base.Models.Data;
+﻿using Nexus.Music.Choice.Worker.Base.Models.CommandData;
 using Nexus.Music.Choice.Worker.Entities;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
 
@@ -82,7 +82,7 @@ internal class UserConnectionControlService : IUserConnectionControlService
 
     public int GetTotalActiveUsers() => _userConnections.Count;
 
-    private UserConnectionTrace CreateTrace(Guid userId, ConnectionState state) =>
+    private static UserConnectionTrace CreateTrace(Guid userId, ConnectionState state) =>
         new UserConnectionTrace
         {
             Id = Guid.NewGuid(),

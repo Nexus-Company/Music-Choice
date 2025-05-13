@@ -1,6 +1,7 @@
 ﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Interfaces;
+using Nexus.Music.Choice.Worker.Jobs;
 using Nexus.Music.Choice.Worker.PipeHandler;
 using Nexus.Music.Choice.Worker.Services;
 using Nexus.Music.Choice.Worker.Services.Integrations;

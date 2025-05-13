@@ -1,6 +1,6 @@
 ﻿using Nexus.Music.Choice.Worker.Services.Interfaces;
 
-namespace Nexus.Music.Choice.Worker.Services;
+namespace Nexus.Music.Choice.Worker.Entities;
 
 public class VoteInteraction
 {

@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using Nexus.Music.Choice.Domain.Services.EventArgs;
 
 namespace Nexus.Music.Choice.Domain.Services.Interfaces;
 
@@ -16,11 +16,3 @@ public interface IHttpProvisioningService
 }
 
 public delegate Task<bool> HttpMessageReceivedDelegate(HttpProvisioningMessageEventArgs args);
-
-public class HttpProvisioningMessageEventArgs : EventArgs
-{
-    public HttpListenerRequest Request { get; set; }
-    public HttpProvisioningMessageEventArgs()
-    {
-    }
-}

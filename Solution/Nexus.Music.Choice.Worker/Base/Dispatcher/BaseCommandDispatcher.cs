@@ -1,5 +1,5 @@
 ﻿using Nexus.Music.Choice.Worker.Base.Models;
-using Nexus.Music.Choice.Worker.Base.Models.Data;
+using Nexus.Music.Choice.Worker.Base.Models.CommandData;
 using Nexus.Music.Choice.Worker.Base.Models.Enums;
 using Nexus.Music.Choice.Worker.Entities;
 using Nexus.Music.Choice.Worker.Interfaces;

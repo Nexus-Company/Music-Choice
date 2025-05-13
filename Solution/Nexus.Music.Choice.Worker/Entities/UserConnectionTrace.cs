@@ -1,4 +1,4 @@
-﻿using Nexus.Music.Choice.Worker.Base.Models.Data;
+﻿using Nexus.Music.Choice.Worker.Base.Models.CommandData;
 
 namespace Nexus.Music.Choice.Worker.Entities;
 

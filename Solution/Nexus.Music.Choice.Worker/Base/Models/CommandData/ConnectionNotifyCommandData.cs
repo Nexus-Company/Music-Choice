@@ -1,4 +1,4 @@
-﻿namespace Nexus.Music.Choice.Worker.Base.Models.Data;
+﻿namespace Nexus.Music.Choice.Worker.Base.Models.CommandData;
 
 internal class ConnectionNotifyCommandData : ICommandData
 {

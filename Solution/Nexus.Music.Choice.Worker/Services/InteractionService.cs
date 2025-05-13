@@ -1,7 +1,9 @@
-﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
+﻿using Nexus.Music.Choice.Domain.Models;
+using Nexus.Music.Choice.Domain.Services.EventArgs;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
-using Nexus.Music.Choice.Worker.Base.Models.Enums;
+using Nexus.Music.Choice.Worker.Base.Models.MessageData;
 using Nexus.Music.Choice.Worker.Entities;
 using Nexus.Music.Choice.Worker.Interfaces;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
@@ -37,24 +39,19 @@ internal class InteractionService : IInteractionService
 
     public async Task TrackAddAync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var playerState = await _musicPlayerService.GetPlayerStateAsync(cancellationToken);
+        var playerState = await CheckPlayerStateAsync(cancellationToken);
 
-        if (!_userTrackAdd.TryAdd(trackId, userId) || playerState?.Item?.Id == trackId)
+        if (!_userTrackAdd.TryAdd(trackId, userId) || playerState.Item?.Id == trackId)
             throw new ArgumentException("Music already added in queue.");
 
         await _musicPlayerService.AddTrackAsync(trackId, cancellationToken);
         await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueAdd, trackId, userId, cancellationToken);
-
-        _messageDispatcher.DispatchMessage(new Message
-        {
-            MessageType = MessageType.Event,
-            EventType = EventType.TrackQueueAdd,
-            Data = trackId
-        });
     }
 
     public async Task TrackRemoveAsync(string trackId, Guid userId, CancellationToken cancellationToken = default)
     {
+        _ = await CheckPlayerStateAsync(cancellationToken);
+
         if (_userTrackAdd.TryGetValue(trackId, out Guid addUserId))
         {
             if (addUserId == userId)
@@ -80,12 +77,6 @@ internal class InteractionService : IInteractionService
             await _musicPlayerService.RemoveTrackAsync(trackId, cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.TrackQueueRemoveByVote, trackId, null, cancellationToken);
 
-            _messageDispatcher.DispatchMessage(new Message
-            {
-                MessageType = MessageType.Event,
-                EventType = EventType.TrackQueueRemove,
-                Data = trackId
-            });
             _logger.LogInformation("Remove track {id} action performed.", trackId);
         }
         else
@@ -96,6 +87,8 @@ internal class InteractionService : IInteractionService
 
     public async Task VoteSkipAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        _ = await CheckPlayerStateAsync(cancellationToken);
+
         string? trackId = _musicPlayerService.PlayerState?.Item?.Id;
         _voteService.AddVote(userId, VotingType.SkipTrack, trackId);
 
@@ -108,11 +101,6 @@ internal class InteractionService : IInteractionService
             await _musicPlayerService.SkipTrackAsync(cancellationToken);
             await _interactionLogService.LogActionExecutedAsync(ActionExecutedType.SkipTrackByVote, trackId, null, cancellationToken);
 
-            _messageDispatcher.DispatchMessage(new Message
-            {
-                MessageType = MessageType.Event,
-                EventType = EventType.SkipTrack
-            });
             _logger.LogInformation("Skip track {trackId} action performed.", trackId);
         }
         else
@@ -121,20 +109,26 @@ internal class InteractionService : IInteractionService
         }
     }
 
-    private void CheckPlayerState()
+    private async Task<PlayerState> CheckPlayerStateAsync(CancellationToken cancellationToken = default)
     {
+        var playerState = await _musicPlayerService.GetPlayerStateAsync(cancellationToken);
 
+        if (playerState == null)
+            throw new NullReferenceException();
+
+        return playerState;
     }
 
-    private void PlayerStateChanged(object? sender, PlayerStateChangedEventArgs e)
+    private void TrackQueueChanged(object? sender, TrackQueueChangedEventArgs args)
     {
-        _ = _userTrackAdd.Remove(e.NewState?.Item?.Id ?? string.Empty);
-        _voteService.ResetVotesForAction(VotingType.SkipTrack, e.NewState?.Item?.Id);
+        _messageDispatcher.DispatchMessage(new Message(new TrackQueueChangedMessageData(args)));
+    }
 
-        _messageDispatcher.DispatchMessage(new Message()
-        {
-            MessageType = MessageType.PlayerState,
-            Data = e.NewState
-        });
+    private void PlayerStateChanged(object? sender, PlayerStateChangedEventArgs args)
+    {
+        _ = _userTrackAdd.Remove(args.NewState?.Item?.Id ?? string.Empty);
+        _voteService.ResetVotesForAction(VotingType.SkipTrack, args.NewState?.Item?.Id);
+
+        _messageDispatcher.DispatchMessage(new Message(new PlayerStateChangedMessageData(args)));
     }
 }

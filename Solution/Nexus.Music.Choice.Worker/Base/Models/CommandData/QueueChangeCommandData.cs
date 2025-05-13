@@ -1,4 +1,4 @@
-﻿namespace Nexus.Music.Choice.Worker.Base.Models.Data;
+﻿namespace Nexus.Music.Choice.Worker.Base.Models.CommandData;
 
 public class QueueChangeCommandData : ICommandData
 {

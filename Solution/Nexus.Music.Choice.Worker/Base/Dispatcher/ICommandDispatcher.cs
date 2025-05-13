@@ -16,7 +16,7 @@ public interface ICommandDispatcher<out T> : IDispatcher<T>
     public void DispatchCommand(object? sender, Command command);
 }
 
-public interface IMessageDispatcher<out T> : IDispatcher<T>
+internal interface IMessageDispatcher<out T> : IDispatcher<T>
     where T : class, IStreamWriter
 {
     public void DispatchMessage(Message message);

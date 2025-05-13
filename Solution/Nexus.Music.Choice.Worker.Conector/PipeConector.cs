@@ -1,4 +1,6 @@
-﻿using Nexus.Music.Choice.Worker.Conector.Base;
+﻿using Newtonsoft.Json;
+using Nexus.Music.Choice.Worker.Conector.Base;
+using Nexus.Music.Choice.Worker.Conector.EventData;
 using System.Collections.Concurrent;
 using System.IO.Pipes;
 using System.Text;
@@ -14,7 +16,15 @@ public class PipeConector : IDisposable
     private readonly Thread _readThread;
     private readonly Thread _writeThread;
 
-    public event EventHandler<string>? MessageReceived;
+    public event EventHandler<EventMessage>? MessageReceived;
+
+    private readonly JsonSerializerSettings settings = new()
+    {
+        Converters =
+         [
+             new EventMessageConverter()
+         ]
+    };
 
     public PipeConector(string? serverName = null)
     {
@@ -72,7 +82,9 @@ public class PipeConector : IDisposable
                     string message = fullText[..index].Trim();
                     stringBuilder.Remove(0, index + 1);
 
-                    MessageReceived?.Invoke(this, message);
+                    var eventMessage = JsonConvert.DeserializeObject<EventMessage>(message, settings);
+
+                    MessageReceived?.Invoke(this, eventMessage);
                 }
             }
             catch (OperationCanceledException)

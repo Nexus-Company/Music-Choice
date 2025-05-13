@@ -1,6 +1,8 @@
-﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
+﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
+using Nexus.Music.Choice.Worker.Base.Models.MessageData;
 using Nexus.Music.Choice.Worker.Services.Interfaces;
 using System.IO.Pipes;
 
@@ -50,24 +52,17 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
 
         _logger.LogInformation("Client with connection id #{id} connected.", connectionId);
 
-        await SendServerState(writer);
+        await SendInitialPlayerState(writer);
 
         _tasks.Add(MonitorConnection(server, connectionId, stoppingToken));
     }
 
-    private async Task SendServerState(PipeWriter streamWriter)
+    private async Task SendInitialPlayerState(PipeWriter streamWriter)
     {
-        streamWriter.AddToSendQueue(new Message()
-        {
-            MessageType = MessageType.PlayerState,
-            Data = await _musicPlayerService.GetPlayerStateAsync()
-        });
+        var playerState = await _musicPlayerService.GetPlayerStateAsync();
+        var queue = await _musicPlayerService.GetQueueAsync();
 
-        streamWriter.AddToSendQueue(new Message()
-        {
-            MessageType = MessageType.TrackQueue,
-            Data = await _musicPlayerService.GetQueueAsync()
-        });
+        streamWriter.AddToSendQueue(new Message(new InitialMessageData(playerState, queue)));
     }
 
     private async Task MonitorConnection(

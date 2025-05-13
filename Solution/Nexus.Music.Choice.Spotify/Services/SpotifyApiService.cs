@@ -4,6 +4,7 @@ using Nexus.Music.Choice.Domain;
 using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Spotify.Models;
 using Nexus.Music.Choice.Spotify.Services.Interfaces;
+using System.Diagnostics;
 
 namespace Nexus.Music.Choice.Spotify.Services;
 
@@ -33,21 +34,26 @@ internal class SpotifyApiService : ISpotifyApiService, IDisposable
 
     public async Task<SpotifyPlayerState?> GetPlayerStateAsync(CancellationToken stoppingToken = default)
     {
-        var request = new HttpRequestMessage()
+        var request = new HttpRequestMessage
         {
             RequestUri = new Uri($"{SpotifyEndPoint}/me/player")
         };
 
+        var stopwatch = Stopwatch.StartNew();
+
         var response = await _httpClient.SendAsync(request, stoppingToken);
-
         string contentStr = await response.Content.ReadAsStringAsync(stoppingToken);
-
-        SpotifyPlayerState? playerState = JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr);
+        var playerState = JsonConvert.DeserializeObject<SpotifyPlayerState>(contentStr);
 
         if (playerState == null)
             return null;
 
-        playerState.RetrievedAt = ((DateTimeOffset)_clock.Now).ToUnixTimeSeconds();
+        var now = _clock.Now;
+
+        stopwatch.Stop();
+        var latency = stopwatch.Elapsed;
+
+        playerState.RetrievedAt = ((DateTimeOffset)(now - latency)).ToUnixTimeSeconds();
 
         return playerState;
     }

@@ -1,6 +1,7 @@
+using Nexus.Music.Choice.Worker.PipeHandler;
 using System.IO.Pipes;
 
-namespace Nexus.Music.Choice.Worker.PipeHandler;
+namespace Nexus.Music.Choice.Worker.Jobs;
 
 public class PipeWorker : BackgroundService
 {
@@ -35,7 +36,7 @@ public class PipeWorker : BackgroundService
         }
     }
 
-    private NamedPipeServerStream CreatePipeServer()
+    private static NamedPipeServerStream CreatePipeServer()
     {
         return new NamedPipeServerStream(
             PipeName,

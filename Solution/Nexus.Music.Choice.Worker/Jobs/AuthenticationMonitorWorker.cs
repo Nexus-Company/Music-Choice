@@ -1,5 +1,7 @@
 ﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 
+namespace Nexus.Music.Choice.Worker.Jobs;
+
 public class AuthenticationMonitorWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -27,13 +29,13 @@ public class AuthenticationMonitorWorker : BackgroundService
                     if (authenticated)
                         continue;
 
-                    _logger.LogWarning("The service '{service}' require authentication.", service.Name);
+                    _logger.LogWarning("The service '{ServiceName}' requires authentication.", service.Name);
 
                     await service.StartAuthenticationAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Error while checking auth for {service.Name}");
+                    _logger.LogError(ex, "Error while checking auth for {ServiceName}", service.Name);
                 }
             }
 
