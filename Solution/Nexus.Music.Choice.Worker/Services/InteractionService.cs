@@ -15,17 +15,18 @@ internal class InteractionService : IInteractionService
     private readonly ILogger<InteractionService> _logger;
     private readonly IMusicPlayerService _musicPlayerService;
     private readonly IInteractionLogService _interactionLogService;
+    private readonly IUserConnectionControlService _usersConnectionService;
     private readonly IVoteService _voteService;
     private readonly IMessageDispatcher<IStreamWriter> _messageDispatcher;
 
     public Dictionary<string, Guid> _userTrackAdd = [];
 
     public InteractionService(
-        InteractContext interactContext,
         IMessageDispatcher<IStreamWriter> messageDispatcher,
         IMusicPlayerService musicPlayerService,
         IInteractionLogService interactionLogService,
         IVoteService voteService,
+        IUserConnectionControlService usersConnectionService,
         ILogger<InteractionService> logger)
     {
         _logger = logger;
@@ -33,8 +34,11 @@ internal class InteractionService : IInteractionService
         _voteService = voteService;
         _messageDispatcher = messageDispatcher;
         _interactionLogService = interactionLogService;
+        _usersConnectionService = usersConnectionService;
 
         _musicPlayerService.PlayerStateChanged += PlayerStateChanged;
+        _musicPlayerService.TrackQueueChanged += TrackQueueChanged;
+        _usersConnectionService.UsersConnectionChanged += UsersConnectionChanged;
     }
 
     public async Task TrackAddAync(string trackId, Guid userId, CancellationToken cancellationToken = default)
@@ -117,6 +121,11 @@ internal class InteractionService : IInteractionService
             throw new NullReferenceException();
 
         return playerState;
+    }
+
+    private void UsersConnectionChanged(object? sender, UserConnectionChangedEventArgs args)
+    {
+        _messageDispatcher.DispatchMessage(new Message(new UsersConnectionEventMessageData(args)));
     }
 
     private void TrackQueueChanged(object? sender, TrackQueueChangedEventArgs args)

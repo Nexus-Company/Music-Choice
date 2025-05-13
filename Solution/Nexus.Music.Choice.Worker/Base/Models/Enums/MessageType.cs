@@ -2,7 +2,7 @@
 
 public enum MessageType
 {
-    UserEvent,
+    UserConnectionEvent,
     TrackQueueChanged,
     PlayerStateChanged,
     InitialMessage

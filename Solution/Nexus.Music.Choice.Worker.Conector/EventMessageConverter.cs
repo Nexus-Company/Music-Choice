@@ -15,7 +15,7 @@ internal class EventMessageConverter : JsonConverter
         _resolveType.Add(MessageType.TrackQueueChanged, typeof(TrackQueueChangedEventData));
         _resolveType.Add(MessageType.InitialMessage, typeof(InitialEventData));
         _resolveType.Add(MessageType.PlayerStateChanged, typeof(PlayerStateChangedEventData));
-        _resolveType.Add(MessageType.UserEvent, typeof(UserConnectionEventData));
+        _resolveType.Add(MessageType.UserConnectionEvent, typeof(UserConnectionEventData));
     }
 
     public override bool CanConvert(Type objectType)

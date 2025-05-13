@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
-using Nexus.Music.Choice.Domain.Services.Interfaces;
+﻿using Nexus.Music.Choice.Domain.Services.Interfaces;
 using Nexus.Music.Choice.Worker.Base.Dispatcher;
 using Nexus.Music.Choice.Worker.Base.Models;
 using Nexus.Music.Choice.Worker.Base.Models.MessageData;
@@ -61,8 +60,9 @@ internal class PipeConnectionHandler : IPipeConnectionHandler, IDisposable
     {
         var playerState = await _musicPlayerService.GetPlayerStateAsync();
         var queue = await _musicPlayerService.GetQueueAsync();
+        int onlineUsers = _userControlService.GetTotalActiveUsers();
 
-        streamWriter.AddToSendQueue(new Message(new InitialMessageData(playerState, queue)));
+        streamWriter.AddToSendQueue(new Message(new InitialMessageData(onlineUsers, playerState, queue)));
     }
 
     private async Task MonitorConnection(

@@ -7,4 +7,5 @@ public class InitialEventData : IEventData
 {
     public PlayerState? PlayerState { get; set; }
     public IEnumerable<Track>? Queue { get; set; }
+    public int OnlineUsers { get; set; }
 }

@@ -11,6 +11,8 @@ internal class UserConnectionControlService : IUserConnectionControlService
     private readonly InteractContext _interactionContext;
     private readonly ILogger<UserConnectionControlService> _logger;
 
+    public event EventHandler<UserConnectionChangedEventArgs>? UsersConnectionChanged;
+
     public UserConnectionControlService(
         InteractContext interactionContext,
         ILogger<UserConnectionControlService> logger)
@@ -19,14 +21,14 @@ internal class UserConnectionControlService : IUserConnectionControlService
         _logger = logger;
     }
 
-    public void ConnectUsers(int connectionId, IEnumerable<Guid> userIds)
+    public void ConnectUsers(int connectionId, IEnumerable<Guid> usersId)
     {
         if (!_connectionUsers.ContainsKey(connectionId))
             _connectionUsers[connectionId] = [];
 
         var newLogs = new List<UserConnectionTrace>();
 
-        foreach (var userId in userIds)
+        foreach (var userId in usersId)
         {
             if (_userConnections.ContainsKey(userId))
                 continue;
@@ -39,16 +41,17 @@ internal class UserConnectionControlService : IUserConnectionControlService
         }
 
         SaveTraces(newLogs);
+        CallUserConnectionChangedEvent(usersId, ConnectionState.Connect, "System notify user connection.");
     }
 
     public void DisconnectUsers(int connectionId)
     {
-        if (!_connectionUsers.TryGetValue(connectionId, out var users))
+        if (!_connectionUsers.TryGetValue(connectionId, out var usersId))
             return;
 
         var newLogs = new List<UserConnectionTrace>();
 
-        foreach (var userId in users)
+        foreach (var userId in usersId)
         {
             _userConnections.Remove(userId);
             newLogs.Add(CreateTrace(userId, ConnectionState.Disconnect));
@@ -57,13 +60,14 @@ internal class UserConnectionControlService : IUserConnectionControlService
 
         _connectionUsers.Remove(connectionId);
         SaveTraces(newLogs);
+        CallUserConnectionChangedEvent(usersId, ConnectionState.Disconnect, "System trace down.");
     }
 
-    public void DisconnectUsers(IEnumerable<Guid> userIds)
+    public void DisconnectUsers(IEnumerable<Guid> usersId)
     {
         var newLogs = new List<UserConnectionTrace>();
 
-        foreach (var userId in userIds)
+        foreach (var userId in usersId)
         {
             if (!_userConnections.TryGetValue(userId, out var connectionId))
                 continue;
@@ -78,12 +82,13 @@ internal class UserConnectionControlService : IUserConnectionControlService
         }
 
         SaveTraces(newLogs);
+        CallUserConnectionChangedEvent(usersId, ConnectionState.Disconnect, "System notify user disconnect.");
     }
 
     public int GetTotalActiveUsers() => _userConnections.Count;
 
     private static UserConnectionTrace CreateTrace(Guid userId, ConnectionState state) =>
-        new UserConnectionTrace
+        new()
         {
             Id = Guid.NewGuid(),
             UserId = userId,
@@ -98,5 +103,16 @@ internal class UserConnectionControlService : IUserConnectionControlService
 
         _interactionContext.UserConnectionsTrace.AddRange(traces);
         _interactionContext.SaveChanges();
+    }
+
+    private void CallUserConnectionChangedEvent(IEnumerable<Guid> usersId, ConnectionState connectionState, string? cause = null)
+    {
+        var args = new UserConnectionChangedEventArgs(usersId, connectionState)
+        {
+            OnlineUsers = GetTotalActiveUsers(),
+            Cause = cause
+        };
+
+        UsersConnectionChanged?.Invoke(this, args);
     }
 }
